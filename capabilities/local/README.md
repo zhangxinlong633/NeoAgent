@@ -8,5 +8,6 @@
 | `uname_info.json5` | `uname_info` | `uname -a` |
 | `pwd_print.json5` | `pwd_print` | 沙箱 cwd（`capability_matrix.root`） |
 | `weather_wttr.json5` | `weather_wttr` | 经 `scripts/tools/weather-wttr.sh` 查询 wttr.in 短天气行 |
+| `train_query.json5` | `train_query` | 经 `scripts/tools/train_query.sh` 查询 12306 指定日期两站间 G/D/C 车次摘要 |
 
 本目录无子目录。选型元数据见 [`AGENTS.md`](../../AGENTS.md) §4.1。

@@ -1,6 +1,6 @@
 {
   name: "train_query",
-  description: "Query China Railway (12306) high-speed / EMU train services (G/D/C) between two stations on a given date and print a short list of train numbers with departure/arrival times.",
+  description: "Query China Railway (12306) high-speed / EMU train services (G/D/C) between two stations on a given date and print a short list of train numbers with departure/arrival times. Accepts Chinese city/station names (e.g. 南京, 北京南) or telecodes (NJH, VNP).",
   when: [
     "User asks for 高铁 / 动车 / 车次 / train times between two Chinese cities on a date",
     "Need live timetable data rather than model guesswork",
@@ -11,7 +11,7 @@
     "Historical or long-range planning beyond the queried date",
   ],
   tags: ["travel", "rail", "china", "http"],
-  outcome: "Header line plus up to 20 rows like: G102 06:20->10:48 04:28",
+  outcome: "Header with resolved stations plus up to 20 rows like: G2 08:01->11:32 03:31",
   requires: [],
   argv: ["./scripts/tools/train_query.sh"],
   timeout_sec: 40,
