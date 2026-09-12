@@ -30,7 +30,7 @@ Neo Agent 是面向明确目标的可移植 Agent 运行时。它在可控边界
 8. 具名会话 — 默认 id `default`；`-S ID`；`--session-list` / `--session-clear`
 9. 多会话混合 — `-S a,b` 按序注入，本轮只写回第一个 ID
 10. 新开默认会话 — `-N` / `--session-new` 将 `default` 归档为 `YYYYMMDD-HHMMSS` 后重新聊
-11. Daemon 多轮 — `neo daemon` / `--socket`
+11. Daemon 多轮 — `neo daemon` / `-D` / `--daemon` / `--socket`；交互式 `User>` / `neo>` + Markdown；UTF-8 退格（`IUTF8`）
 12. 本机向量记忆 — 召回、启发式写入、`memory_add`、`memory store|recall`
 13. 终端 Markdown — 默认开启（md4c）；`--no-render` 输出原文
 14. Profile / 诊断 — `-p` / `-m` / `-v` / `-d`
@@ -88,7 +88,7 @@ cp config/config.json5.example config/config.json5
 3. 具名会话 / 混合 — `./neo -S id` / `-S a,b`
 4. JSON / 文件 — `./neo -j "…"` / `./neo -o FILE "…"` / `./neo -j -o FILE "…"`
 5. DAG — `./neo dag run <名>` / `./neo run <名|"目标">` / `./neo plan "目标"`
-6. 多轮 — `./neo daemon` / `--socket PATH`
+6. 多轮 — `./neo -D`（或 `daemon` / `--daemon`）/ `--socket PATH`
 7. 记忆 — `./neo memory store|recall "…"`
 8. Profile — `./neo -p demo …`
 

@@ -347,10 +347,11 @@ Planner 倾向约 4 步编辑流水线（理解 → 起草 → 自检 → 终稿
 ### 6.1 交互式 stdin
 
 ```bash
-./neo daemon
+./neo -D
+# 等价：./neo daemon   ./neo --daemon
 ```
 
-输入问题后回车；`exit` 或 EOF 结束。轮次上限见 `session.max_turns`。
+终端下提示符为 `User>`（输入）与 `neo>`（回复，默认 Markdown 渲染）。`exit` / `quit` / EOF 结束。轮次上限见 `session.max_turns`。交互模式会打开 `IUTF8`，退格按 UTF-8 字符删除。管道输入时无提示符、输出原文。
 
 ### 6.2 Unix socket
 
@@ -360,6 +361,7 @@ Planner 倾向约 4 步编辑流水线（理解 → 起草 → 自检 → 终稿
 echo "现在几点（UTC）？请用工具" | nc -U /tmp/neo.sock
 ```
 
+socket 为一发一收原文，不加 `User>` / `neo>` 前缀。
 ---
 
 ## 7. Profile 与脚本入口

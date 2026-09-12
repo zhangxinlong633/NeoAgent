@@ -198,5 +198,33 @@ else
   ok "profile demo skipped (missing)"
 fi
 
+# --- daemon aliases + unknown options must not become chat text ---
+run_capture "$NEO" -h
+if [[ "$RC" -eq 0 ]] && grep -qE -- '-D|--daemon' <<<"$ERR$OUT"; then
+  ok "help lists -D/--daemon"
+else
+  bad "help lists -D/--daemon (rc=$RC)"
+fi
+
+_out="$(mktemp)"; _err="$(mktemp)"
+set +e
+printf 'exit\n' | "$NEO" -c "$CFG" -D >"$_out" 2>"$_err"
+_rc=$?
+set -e
+OUT="$(cat "$_out")"; ERR="$(cat "$_err")"; RC=$_rc
+rm -f "$_out" "$_err"
+if [[ "$RC" -eq 0 ]] && grep -q 'neo daemon: stdin mode' <<<"$ERR"; then
+  ok "-D enters daemon stdin mode"
+else
+  bad "-D enters daemon (rc=$RC err=$ERR)"
+fi
+
+run_capture "$NEO" --not-a-real-flag
+if [[ "$RC" -ne 0 ]] && grep -q "unknown option" <<<"$ERR"; then
+  ok "unknown option rejected"
+else
+  bad "unknown option rejected (rc=$RC err=$ERR)"
+fi
+
 echo "== $PASS passed, $FAIL failed =="
 [[ "$FAIL" -eq 0 ]]

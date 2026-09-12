@@ -59,7 +59,7 @@ cp config/config.json5.example config/config.json5
 
 ```text
 ./neo [OPTIONS] "your message"
-./neo [OPTIONS] daemon [--socket PATH]
+./neo [OPTIONS] daemon|-D|--daemon [--socket PATH]
 ./neo [OPTIONS] dag run NAME
 ./neo [OPTIONS] plan [--steps N] [-o FILE] "task"
 ./neo [OPTIONS] run NAME|"task" [--steps N] [-o FILE]
@@ -71,7 +71,7 @@ cp config/config.json5.example config/config.json5
 1. `-c` / `--config` — 配置文件
 2. `-p` / `--profile` — 切换到 `config/profiles/NAME/`
 3. `-m` / `--model` — 覆盖模型名
-4. `-v` / `-d` — 详细 / 调试（stderr）
+4. `-v` / `-d` — 详细 / 调试（stderr）；**`-D` 是 daemon**，不是 debug
 5. `-R` / `--render` — Markdown 渲染（**默认已开**）
 6. `--no-render` — 输出原文
 7. `-S` / `--session` — 会话 id（可 `a,b` 混合）；省略则用 `default`
@@ -80,6 +80,7 @@ cp config/config.json5.example config/config.json5
 10. `--role NAME` — 本轮角色（需配置 `roles`）
 11. `-j` / `--json` — OpenAI `chat.completion` JSON
 12. `-o` / `--output` — 聊天写回复/JSON；`plan`/`run` 写规划 DAG
+13. `-D` / `--daemon` — 同子命令 `daemon`（stdin 多轮）
 
 诊断与进度在 **stderr**；程序对接请用 stdout 或 `-o` 文件。
 
@@ -134,10 +135,11 @@ roles: {
 
 ```bash
 ./neo daemon
-./neo daemon --socket /tmp/neo.sock
+./neo -D                    # 同 daemon（注意：-d 是 debug）
+./neo --daemon --socket /tmp/neo.sock
 ```
 
-内存轮次，与 `-S` 落盘独立。
+内存轮次，与 `-S` 落盘独立。交互式终端下会显示 `User>`（你输入）与 `neo>`（助手回复），并对回复做 Markdown 渲染（`--no-render` 可关）。管道 / `--socket` 仍为无前缀原文，方便脚本。交互输入会打开终端 `IUTF8`，退格按 UTF-8 字符删除（而非按字节）。
 
 ---
 

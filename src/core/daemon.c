@@ -1,10 +1,12 @@
 /*
  * Daemon mode: stdin loop or Unix socket server, with session history.
+ * 交互式 stdin（TTY）会加 User>/neo> 提示符，并对助手回复做 Markdown 渲染。
  */
 #include "agent_tools.h"
 #include "capability_matrix.h"
 #include "config.h"
 #include "llm.h"
+#include "neo_md_term.h"
 #include "neo_memory.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +22,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
+#include <locale.h>
+#include <termios.h>
 #endif
 
 static size_t read_file_into(char *buf, size_t cap, const char *path, size_t max_chars) {
@@ -231,40 +235,140 @@ static void daemon_debug_print(agent_config_t *conf, const char *system_prompt, 
           bd, gr, strlen(user_message), re, gr, user_message, re, bd, gr, re);
 }
 
-int run_daemon_stdin(agent_config_t *conf, int debug, int verbose) {
+/* 交互式 REPL：TTY 下显示角色提示符；管道模式保持无前缀原文，方便脚本。 */
+static int daemon_stdin_interactive(void) {
+#if defined(__linux__) || defined(__APPLE__)
+  return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
+#else
+  return 0;
+#endif
+}
+
+static int daemon_term_color(void) {
+  const char *t = getenv("TERM");
+  return t && t[0] && strcmp(t, "dumb") != 0;
+}
+
+#if defined(__linux__) || defined(__APPLE__)
+static struct termios daemon_stdin_tio_saved;
+static int daemon_stdin_tio_saved_ok;
+
+/* 退出交互前恢复 termios，避免把调用方终端设置永久改掉。 */
+static void daemon_stdin_termios_restore(void) {
+  if (daemon_stdin_tio_saved_ok) {
+    (void)tcsetattr(STDIN_FILENO, TCSANOW, &daemon_stdin_tio_saved);
+    daemon_stdin_tio_saved_ok = 0;
+  }
+}
+
+/*
+ * cooked 输入默认按「字节」擦除；中文等 UTF-8 多字节字符需要 IUTF8，
+ * 否则一次退格只删 1 字节，留下乱码。同时清 ISTRIP，避免剥掉高位。
+ */
+static void daemon_stdin_utf8_enable(void) {
+  struct termios tio;
+  if (!isatty(STDIN_FILENO)) return;
+  if (tcgetattr(STDIN_FILENO, &tio) != 0) return;
+  daemon_stdin_tio_saved = tio;
+  daemon_stdin_tio_saved_ok = 1;
+#ifdef IUTF8
+  tio.c_iflag |= IUTF8;
+#endif
+  tio.c_iflag &= ~(tcflag_t)ISTRIP;
+  if (tcsetattr(STDIN_FILENO, TCSANOW, &tio) != 0)
+    daemon_stdin_tio_saved_ok = 0;
+}
+#else
+static void daemon_stdin_termios_restore(void) {}
+static void daemon_stdin_utf8_enable(void) {}
+#endif
+
+static void daemon_print_assistant(const char *data, size_t size, int render, int interactive) {
+  int use_color = interactive && daemon_term_color();
+  const char *gr = use_color ? D_GREEN : "";
+  const char *bd = use_color ? D_BOLD : "";
+  const char *re = use_color ? D_RESET : "";
+
+  if (interactive) {
+    fprintf(stdout, "\n%s%sneo>%s\n", bd, gr, re);
+    fflush(stdout);
+  }
+  if (render && data && size) {
+    if (neo_md_term_render(data, size, stdout, use_color) == 0) {
+      if (data[size - 1] != '\n') putchar('\n');
+      if (interactive) putchar('\n');
+      fflush(stdout);
+      return;
+    }
+    fprintf(stderr, "neo: markdown render failed; printing raw text\n");
+  }
+  if (data && size) {
+    fwrite(data, 1, size, stdout);
+    if (data[size - 1] != '\n') putchar('\n');
+  }
+  if (interactive) putchar('\n');
+  fflush(stdout);
+}
+
+int run_daemon_stdin(agent_config_t *conf, int debug, int verbose, int render) {
   char *system_prompt = malloc(SYSTEM_MAX);
   char *line_buf = malloc(LINE_MAX);
+  int interactive;
   if (!system_prompt || !line_buf) {
     free(system_prompt);
     free(line_buf);
     return -1;
   }
   session_count = 0;
-  fprintf(stderr, "neo daemon: stdin mode. Type 'exit' or 'quit' or EOF to stop.\n");
-  while (fgets(line_buf, LINE_MAX, stdin)) {
-    size_t len = strlen(line_buf);
+  interactive = daemon_stdin_interactive();
+  if (interactive) {
+#if defined(__linux__) || defined(__APPLE__)
+    /* 让 libc/宽字符相关路径认 UTF-8；退格靠下面的 IUTF8。 */
+    (void)setlocale(LC_CTYPE, "");
+#endif
+    daemon_stdin_utf8_enable();
+    fprintf(stderr,
+            "neo daemon: interactive mode. Prompts: User> (input) / neo> (reply). "
+            "Type 'exit' or 'quit' or EOF to stop.\n");
+  } else {
+    fprintf(stderr, "neo daemon: stdin mode. Type 'exit' or 'quit' or EOF to stop.\n");
+  }
+  for (;;) {
+    size_t len;
+    llm_response_t resp = {0};
+    int use_color;
+    const char *cy, *bd, *re;
+
+    if (interactive) {
+      use_color = daemon_term_color();
+      cy = use_color ? D_CYAN : "";
+      bd = use_color ? D_BOLD : "";
+      re = use_color ? D_RESET : "";
+      fprintf(stderr, "%s%sUser>%s ", bd, cy, re);
+      fflush(stderr);
+    }
+    if (!fgets(line_buf, LINE_MAX, stdin)) break;
+    len = strlen(line_buf);
     while (len > 0 && (line_buf[len - 1] == '\n' || line_buf[len - 1] == '\r')) line_buf[--len] = '\0';
     if (len == 0) continue;
     if (strcmp(line_buf, "exit") == 0 || strcmp(line_buf, "quit") == 0) break;
     (void)neo_memory_auto_store(conf, line_buf, verbose || debug);
     build_system_prompt(conf, line_buf, system_prompt, SYSTEM_MAX, verbose || debug);
     if (debug) daemon_debug_print(conf, system_prompt, line_buf);
-    llm_response_t resp = {0};
     if (do_one_turn(conf, system_prompt, line_buf, &resp) != 0) {
       fprintf(stderr, "neo: LLM request failed\n");
       llm_response_free(&resp);
       continue;
     }
     if (resp.data && resp.size) {
-      fwrite(resp.data, 1, resp.size, stdout);
-      if (resp.size > 0 && resp.data[resp.size - 1] != '\n') putchar('\n');
-      fflush(stdout);
+      daemon_print_assistant(resp.data, resp.size, render, interactive);
       session_append("user", line_buf);
       session_append("assistant", resp.data);
       session_trim_to(conf->session_max_turns > 0 ? conf->session_max_turns : 10);
     }
     llm_response_free(&resp);
   }
+  daemon_stdin_termios_restore();
   free(system_prompt);
   free(line_buf);
   return 0;

@@ -62,7 +62,7 @@ static void build_user_message(char *buf, size_t cap, char **argv, int start, in
 
 static void print_usage(const char *prog) {
   fprintf(stderr, "Usage: %s [OPTIONS] \"your message\"\n", prog);
-  fprintf(stderr, "       %s [OPTIONS] daemon [--socket PATH]\n", prog);
+  fprintf(stderr, "       %s [OPTIONS] daemon|-D|--daemon [--socket PATH]\n", prog);
   fprintf(stderr, "       %s [OPTIONS] dag run NAME\n", prog);
   fprintf(stderr, "       %s [OPTIONS] plan [--steps N] [-o FILE] \"task\"\n", prog);
   fprintf(stderr, "       %s [OPTIONS] run NAME|\"task\" [--steps N] [-o FILE]\n", prog);
@@ -86,6 +86,7 @@ static void print_usage(const char *prog) {
   fprintf(stderr, "  -o, --output FILE   Chat: write reply/JSON to FILE; plan/run: save dags JSON\n");
   fprintf(stderr, "  --steps N           (with plan/run) Soft target step count (default 10, max 32)\n");
   fprintf(stderr, "  -h, --help          Show this help\n");
+  fprintf(stderr, "  -D, --daemon        Same as subcommand daemon (stdin multi-turn)\n");
   fprintf(stderr, "  daemon              Run as daemon: read from stdin, reply to stdout\n");
   fprintf(stderr, "  --socket PATH       (with daemon) Listen on Unix socket instead of stdin\n");
   fprintf(stderr, "  dag run NAME        Run a declarative DAG from config/catalog\n");
@@ -461,7 +462,10 @@ int main(int argc, char **argv) {
       arg_start++;
       continue;
     }
-    if (strcmp(argv[arg_start], "daemon") == 0) {
+    /* daemon 子命令；-D/--daemon 别名（-d 仍是 --debug） */
+    if (strcmp(argv[arg_start], "daemon") == 0 ||
+        strcmp(argv[arg_start], "--daemon") == 0 ||
+        strcmp(argv[arg_start], "-D") == 0) {
       daemon_mode = 1;
       arg_start++;
       continue;
@@ -562,6 +566,12 @@ int main(int argc, char **argv) {
       arg_start += 2;
       continue;
     }
+    /* 未知 -* 不当作聊天正文，避免 ./neo -D 之类误打进 default session */
+    if (argv[arg_start][0] == '-' && argv[arg_start][1] != '\0') {
+      fprintf(stderr, "neo: unknown option '%s'\n", argv[arg_start]);
+      print_usage(argv[0]);
+      return 1;
+    }
     break;
   }
 
@@ -602,7 +612,7 @@ int main(int argc, char **argv) {
       if (conf.model.name) strcpy(conf.model.name, model_override);
     }
     int r = socket_path ? run_daemon_socket(&conf, socket_path, debug, verbose)
-                        : run_daemon_stdin(&conf, debug, verbose);
+                        : run_daemon_stdin(&conf, debug, verbose, render);
     config_free(&conf);
     return r != 0;
   }

@@ -131,7 +131,7 @@ Neo 把「钉在仓库上的助手」拆成 **配置 + Markdown（claw）+ 能�
 | 指定配置 | `./neo -c /path/to/config.json5 "问题"` |
 | 换模型名（覆盖 YAML） | `./neo -m qwen/qwen3-8b "问题"` |
 | 看完整 system prompt 与请求 | `./neo -d "问题"`（详情在 stderr） |
-| 多轮 stdin | `./neo daemon`，逐行输入，输入 `exit` 或 EOF 结束 |
+| 多轮 stdin | `./neo -D`（或 `daemon` / `--daemon`）；交互式 `User>` / `neo>`；`exit` 或 EOF 结束 |
 | 多轮 socket | `./neo daemon --socket /tmp/neo.sock`，例如 `echo "问题" \| nc -U /tmp/neo.sock` |
 | 会话长度 | 配置里 `session.max_turns`（daemon 保留的 user+assistant 对数） |
 | 临时关掉工具 | `NEO_DISABLE_TOOLS=1 ./neo "..."`（与 [tool.md](tool.md) 一致） |

@@ -12,5 +12,6 @@
 4. [`dag.md`](dag.md) — `dag run` / `plan` / `run`
 5. [`roles.md`](roles.md) — 同会话 `--role` 切换
 6. [`tools.md`](tools.md) — 能力矩阵与高铁查询等
+7. [`daemon.md`](daemon.md) — `-D` / `daemon` / `--socket`；`User>` / `neo>`
 
 在仓库根按文件中的命令执行即可。zsh 中带 `?` / `*` 的句子请加引号。
