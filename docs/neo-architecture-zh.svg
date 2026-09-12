@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" width="1100" height="560" role="img" aria-labelledby="title desc">
-  <title id="title">Neo Agent closed-loop architecture</title>
-  <desc id="desc">LLM decides and generates or selects a DAG; DAG schedules tools from the Capability Matrix; Memory auto-stores and deliberately stores valuable information and feeds decisions.</desc>
+  <title id="title">Neo Agent 闭环架构</title>
+  <desc id="desc">LLM 决策并生成或选用 DAG；DAG 调度 Capability Matrix 中的工具；Memory 自动与定量存有价值信息并反馈决策。</desc>
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="#4A5A68"/>
@@ -9,70 +9,48 @@
     <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="#B07A3A"/>
     </marker>
-    <filter id="s" x="-3%" y="-3%" width="106%" height="110%">
-      <feDropShadow dx="0" dy="1.2" stdDeviation="1.4" flood-color="#15202B" flood-opacity="0.09"/>
-    </filter>
-    <style type="text/css"><![CDATA[
-      .f { font-family: "IBM Plex Sans", "PingFang SC", "Noto Sans CJK SC", "Helvetica Neue", Arial, sans-serif; }
-      .h { font-size: 14px; font-weight: 600; fill: #15202B; }
-      .p { font-size: 11.5px; font-weight: 500; fill: #5A6A78; }
-      .c { font-size: 11px; font-weight: 600; fill: #3E4E5C; }
-      .hint { font-size: 11px; fill: #667788; }
-    ]]></style>
   </defs>
 
   <rect width="1100" height="560" rx="14" fill="#EEF2F5"/>
   <rect x="18" y="18" width="1064" height="524" rx="12" fill="#F7F9FB" stroke="#D9E1EA"/>
 
-  <g filter="url(#s)">
-    <rect x="40" y="210" width="120" height="88" rx="10" fill="#1F6F8B"/>
-    <text class="f" x="100" y="246" text-anchor="middle" fill="#FFFFFF" font-size="14" font-weight="600">业务目标</text>
-    <text class="f" x="100" y="268" text-anchor="middle" fill="#D5EAF2" font-size="11.5">用户要办成的事</text>
-  </g>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="40" y="48" font-size="11" fill="#667788">Agent 闭环：决策 -&gt; 调度 -&gt; 调用武器库 -&gt; 留存记忆 -&gt; 再决策，直至达成业务目标</text>
 
-  <g filter="url(#s)">
-    <rect x="210" y="190" width="168" height="128" rx="10" fill="#15202B"/>
-    <text class="f" x="294" y="228" text-anchor="middle" fill="#FFFFFF" font-size="14" font-weight="600">决策大脑</text>
-    <text class="f" x="294" y="250" text-anchor="middle" fill="#AEB8C2" font-size="12">大模型 LLM</text>
-    <text class="f" x="294" y="274" text-anchor="middle" fill="#8E9CAA" font-size="11">理解目标 / 规划步骤</text>
-    <text class="f" x="294" y="294" text-anchor="middle" fill="#8E9CAA" font-size="11">生成或选用流程</text>
-  </g>
+  <rect x="40" y="210" width="120" height="88" rx="10" fill="#1F6F8B"/>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="100" y="246" text-anchor="middle" fill="#FFFFFF" font-size="14" font-weight="700">业务目标</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="100" y="268" text-anchor="middle" fill="#D5EAF2" font-size="11.5">用户要办成的事</text>
 
-  <g filter="url(#s)">
-    <rect x="430" y="120" width="176" height="100" rx="10" fill="#FFFFFF" stroke="#2F6F7E" stroke-width="1.5"/>
-    <text class="f h" x="518" y="158" text-anchor="middle">调度框架</text>
-    <text class="f p" x="518" y="180" text-anchor="middle">DAG</text>
-    <text class="f p" x="518" y="200" text-anchor="middle">按图推进 / 路径可复查</text>
-  </g>
+  <rect x="210" y="190" width="168" height="128" rx="10" fill="#15202B"/>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="294" y="228" text-anchor="middle" fill="#FFFFFF" font-size="14" font-weight="700">决策大脑</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="294" y="250" text-anchor="middle" fill="#AEB8C2" font-size="12">大模型 LLM</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="294" y="274" text-anchor="middle" fill="#8E9CAA" font-size="11">理解目标 / 规划步骤</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="294" y="294" text-anchor="middle" fill="#8E9CAA" font-size="11">生成或选用流程</text>
 
-  <g filter="url(#s)">
-    <rect x="430" y="260" width="176" height="100" rx="10" fill="#FFFFFF" stroke="#2F6F7E" stroke-width="1.5"/>
-    <text class="f h" x="518" y="298" text-anchor="middle">武器库</text>
-    <text class="f p" x="518" y="320" text-anchor="middle">Capability Matrix</text>
-    <text class="f p" x="518" y="340" text-anchor="middle">提供受控工具与本事</text>
-  </g>
+  <rect x="430" y="120" width="176" height="100" rx="10" fill="#FFFFFF" stroke="#2F6F7E" stroke-width="1.5"/>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="518" y="158" text-anchor="middle" fill="#15202B" font-size="14" font-weight="700">调度框架</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="518" y="180" text-anchor="middle" fill="#5A6A78" font-size="11.5" font-weight="500">DAG</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="518" y="200" text-anchor="middle" fill="#5A6A78" font-size="11.5" font-weight="500">按图推进 / 路径可复查</text>
 
-  <g filter="url(#s)">
-    <rect x="640" y="200" width="120" height="88" rx="10" fill="#FFFFFF" stroke="#C5D0DB"/>
-    <text class="f h" x="700" y="236" text-anchor="middle">策略边界</text>
-    <text class="f p" x="700" y="258" text-anchor="middle">Policy 守门</text>
-  </g>
+  <rect x="430" y="260" width="176" height="100" rx="10" fill="#FFFFFF" stroke="#2F6F7E" stroke-width="1.5"/>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="518" y="298" text-anchor="middle" fill="#15202B" font-size="14" font-weight="700">武器库</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="518" y="320" text-anchor="middle" fill="#5A6A78" font-size="11.5" font-weight="500">Capability Matrix</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="518" y="340" text-anchor="middle" fill="#5A6A78" font-size="11.5" font-weight="500">提供受控工具与本事</text>
 
-  <g filter="url(#s)">
-    <rect x="810" y="190" width="150" height="128" rx="10" fill="#FFFFFF" stroke="#C5D0DB"/>
-    <text class="f h" x="885" y="232" text-anchor="middle">办成结果</text>
-    <text class="f p" x="885" y="254" text-anchor="middle">DAG + 能力矩阵</text>
-    <text class="f p" x="885" y="276" text-anchor="middle">把一件事做完</text>
-    <text class="f p" x="885" y="298" text-anchor="middle">结果可复查</text>
-  </g>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="518" y="248" text-anchor="middle" fill="#3E4E5C" font-size="11" font-weight="700">结合执行</text>
 
-  <g filter="url(#s)">
-    <rect x="210" y="420" width="750" height="92" rx="10" fill="#FFF8F0" stroke="#E0C19A" stroke-width="1.4"/>
-    <text class="f h" x="585" y="454" text-anchor="middle">自主记忆 Memory（闭环中的留存）</text>
-    <text class="f p" x="585" y="478" text-anchor="middle">自动存储有价值线索 / 亦可定量或主动写入 / 召回反哺决策大脑</text>
-  </g>
+  <rect x="640" y="200" width="120" height="88" rx="10" fill="#FFFFFF" stroke="#C5D0DB"/>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="700" y="236" text-anchor="middle" fill="#15202B" font-size="14" font-weight="700">策略边界</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="700" y="258" text-anchor="middle" fill="#5A6A78" font-size="11.5" font-weight="500">Policy 守门</text>
 
-  <text class="f c" x="518" y="248" text-anchor="middle">结合执行</text>
+  <rect x="810" y="190" width="150" height="128" rx="10" fill="#FFFFFF" stroke="#C5D0DB"/>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="885" y="232" text-anchor="middle" fill="#15202B" font-size="14" font-weight="700">办成结果</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="885" y="254" text-anchor="middle" fill="#5A6A78" font-size="11.5" font-weight="500">DAG + 能力矩阵</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="885" y="276" text-anchor="middle" fill="#5A6A78" font-size="11.5" font-weight="500">把一件事做完</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="885" y="298" text-anchor="middle" fill="#5A6A78" font-size="11.5" font-weight="500">结果可复查</text>
+
+  <rect x="210" y="420" width="750" height="92" rx="10" fill="#FFF8F0" stroke="#E0C19A" stroke-width="1.4"/>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="585" y="454" text-anchor="middle" fill="#15202B" font-size="14" font-weight="700">自主记忆 Memory（闭环中的留存）</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="585" y="478" text-anchor="middle" fill="#5A6A78" font-size="11.5" font-weight="500">自动存储有价值线索 / 许可定量或主动写入 / 召回反馈决策大脑</text>
 
   <path d="M160 254 H210" stroke="#4A5A68" stroke-width="1.7" fill="none" marker-end="url(#a)"/>
   <path d="M378 230 C400 230 410 170 430 170" stroke="#4A5A68" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
@@ -86,8 +64,7 @@
   <path d="M518 360 V420" stroke="#B07A3A" stroke-width="1.4" stroke-dasharray="5 4" fill="none" marker-end="url(#am)"/>
   <path d="M885 318 V420" stroke="#B07A3A" stroke-width="1.4" stroke-dasharray="5 4" fill="none" marker-end="url(#am)"/>
   <path d="M210 466 H100 254" stroke="#B07A3A" stroke-width="1.4" stroke-dasharray="5 4" fill="none" marker-end="url(#am)"/>
-  <text class="f" x="150" y="450" text-anchor="middle" fill="#B07A3A" font-size="10.5">召回反哺</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="148" y="450" text-anchor="middle" fill="#B07A3A" font-size="10.5">召回反馈</text>
 
-  <text class="f hint" x="40" y="48">Agent 闭环：决策 -&gt; 调度 -&gt; 调用武器库 -&gt; 留存记忆 -&gt; 再决策，直至达成业务目标</text>
-  <text class="f hint" x="40" y="536">LLM 生成/选用 DAG / DAG 调度 / Capability Matrix 提供工具 / Memory 自动与定量存储有价值信息</text>
+  <text font-family="Helvetica Neue, Arial, sans-serif" x="40" y="536" font-size="11" fill="#667788">LLM 生成/选用 DAG / DAG 调度 / Capability Matrix 提供工具 / Memory 自动与定量存储有价值信息</text>
 </svg>
