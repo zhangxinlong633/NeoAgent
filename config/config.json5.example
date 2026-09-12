@@ -55,6 +55,10 @@
     directory: "capabilities",
     max_rounds: 16,
     shell_enabled: false,
+    // Optional HTTPS fetch (builtin http_get). Hosts are exact match, case-insensitive:
+    // http_fetch_enabled: true,
+    // http_allow_hosts: "baidu.com,www.baidu.com",
+    // http_fetch_max_bytes: 65536,
   },
 
   // Default pack: dags/{baseline,workspace}. Flagship SOP: workspace_brief.

@@ -6,7 +6,7 @@ Unix 常用工具能力包：约 **127** 个命令定义（用法、选型元数
 
 | 文件 | 作用 |
 |------|------|
-| `enabled.json5` | 白名单：仅 `load` 中的能力进入矩阵（当前 30 个） |
+| `enabled.json5` | 白名单：仅 `load` 中的能力进入矩阵（含本机诊断：`unix_ps` / `unix_sysctl_hw` / `unix_vm_stat` / `unix_ping`） |
 | `unix_*.json5` | 全量定义；未列入白名单者不进矩阵 |
 | `CATALOG.md` | 用法与样例输出总表 |
 

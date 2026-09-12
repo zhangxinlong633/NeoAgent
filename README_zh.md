@@ -111,6 +111,9 @@ cp config/config.json5.example config/config.json5
 # 产品能力说明
 ./neo "用三句话说明 Neo Agent 适合完成哪些目标型任务"
 
+# 终端内渲染 Markdown 回复（内置 md4c）
+./neo -R "用三句话说明 Neo Agent 适合完成哪些目标型任务"
+
 # 执行目录中的 DAG
 ./neo dag run show_time
 ./neo dag run workspace_brief

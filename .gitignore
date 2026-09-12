@@ -25,6 +25,7 @@ tests/test_plan_extract
 tests/test_capability_matrix
 tests/test_neo_embed
 tests/test_neo_memory
+tests/test_neo_md_term
 tests/fixtures/.tmp_memory.vdb
 tests/fixtures/.tmp_memory.vdb.txts
 tests/fixtures/.tmp_memory_ignore.vdb

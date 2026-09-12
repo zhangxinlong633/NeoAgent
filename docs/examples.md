@@ -134,7 +134,17 @@ neo tool: read_file
 ./neo "调用 unix_wc，参数 argv 为 [\"-l\",\"README.md\"]，报告行数。" 2>&1
 ```
 
+本机诊断（白名单已含）：`unix_ps`（进程/`%cpu`）、`unix_sysctl_hw`（如 `hw.ncpu`）、`unix_vm_stat`、`unix_ping`（连通性）。HTTPS 探测用 builtin `http_get`（需配置 `http_fetch_enabled` + `http_allow_hosts`）。
+
 危险命令（如 `unix_rm`）默认不在白名单，调用应失败或不可见。调整见 [`capabilities/unix/README.md`](../capabilities/unix/README.md)。
+
+### 3.5 终端 Markdown 渲染
+
+```bash
+./neo -R "用表格对比 DAG 与 Capability Matrix 的职责"
+```
+
+`-R` / `--render` 用 vendored [MD4C](https://github.com/mity/md4c) 把助手回复渲染到终端（TTY 下带 ANSI）；失败则回退原文。
 
 ---
 

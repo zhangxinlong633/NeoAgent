@@ -8,6 +8,7 @@
 #include "config.h"
 #include "daemon.h"
 #include "llm.h"
+#include "neo_md_term.h"
 #include "neo_memory.h"
 #include "plan.h"
 #include "dag.h"
@@ -71,6 +72,7 @@ static void print_usage(const char *prog) {
   fprintf(stderr, "  -m, --model NAME    Override model name\n");
   fprintf(stderr, "  -d, --debug         Print system prompt, user message and request params to stderr\n");
   fprintf(stderr, "  -v, --verbose       Step / capability / memory summaries on stderr\n");
+  fprintf(stderr, "  -R, --render        Render assistant Markdown to the terminal (md4c)\n");
   fprintf(stderr, "  -o, --output FILE   (with plan/run) Save planned dags JSON\n");
   fprintf(stderr, "  --steps N           (with plan/run) Soft target step count (default 10, max 32)\n");
   fprintf(stderr, "  -h, --help          Show this help\n");
@@ -81,6 +83,22 @@ static void print_usage(const char *prog) {
   fprintf(stderr, "  run NAME|\"task\"     Run named DAG, or plan+execute a task\n");
   fprintf(stderr, "  memory recall Q     Dry-run local memory recall (no LLM); text on stdout\n");
   fprintf(stderr, "  memory store TEXT   Append note into local vector DB (not MEMORY.md)\n");
+}
+
+/* 助手正文输出：可选 md4c 终端渲染；失败则回退原文。 */
+static void neo_print_assistant(const char *data, size_t size, int render) {
+  int use_color;
+  if (!data || !size) return;
+  if (render) {
+    use_color = isatty(STDOUT_FILENO) ? 1 : 0;
+    if (neo_md_term_render(data, size, stdout, use_color) == 0) {
+      if (data[size - 1] != '\n') putchar('\n');
+      return;
+    }
+    fprintf(stderr, "neo: markdown render failed; printing raw text\n");
+  }
+  fwrite(data, 1, size, stdout);
+  if (data[size - 1] != '\n') putchar('\n');
 }
 
 /* stderr 一行说明本轮 Memory 注入方式（-v / -d / memory 子命令）。 */
@@ -238,6 +256,7 @@ int main(int argc, char **argv) {
   int daemon_mode = 0;
   int debug = 0;
   int verbose = 0;
+  int render = 0;
   int dag_mode = 0;
   const char *dag_name = NULL;
   int memory_mode = 0; /* 1=recall 2=store */
@@ -355,6 +374,11 @@ int main(int argc, char **argv) {
     }
     if (strcmp(argv[arg_start], "--verbose") == 0 || strcmp(argv[arg_start], "-v") == 0) {
       verbose = 1;
+      arg_start++;
+      continue;
+    }
+    if (strcmp(argv[arg_start], "--render") == 0 || strcmp(argv[arg_start], "-R") == 0) {
+      render = 1;
       arg_start++;
       continue;
     }
@@ -647,10 +671,8 @@ int main(int argc, char **argv) {
     llm_response_free(&resp);
     return 1;
   }
-  if (resp.data && resp.size) {
-    fwrite(resp.data, 1, resp.size, stdout);
-    if (resp.data[resp.size - 1] != '\n') putchar('\n');
-  }
+  if (resp.data && resp.size)
+    neo_print_assistant(resp.data, resp.size, render);
   llm_response_free(&resp);
   return 0;
 }

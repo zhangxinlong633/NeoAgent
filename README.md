@@ -111,6 +111,9 @@ From the repository root (valid API credentials required):
 # Product positioning
 ./neo "In three sentences, what goal-oriented tasks is Neo Agent good for?"
 
+# Same reply with terminal Markdown rendering (md4c)
+./neo -R "In three sentences, what goal-oriented tasks is Neo Agent good for?"
+
 # Run catalog DAGs
 ./neo dag run show_time
 ./neo dag run workspace_brief
