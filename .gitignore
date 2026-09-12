@@ -27,6 +27,7 @@ tests/test_neo_embed
 tests/test_neo_memory
 tests/test_neo_md_term
 tests/test_neo_session
+tests/test_config_roles
 tests/fixtures/.tmp_memory.vdb
 tests/fixtures/.tmp_memory.vdb.txts
 tests/fixtures/.tmp_memory_ignore.vdb
