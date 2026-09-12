@@ -11,7 +11,7 @@ Neo accepts concrete goals (status checks, material organization, fixed operatio
 Neo runs as a closed-loop agent system: the **LLM is the decision brain** (understands the goal and generates or selects a DAG); the **DAG is the scheduler** (advances by graph, reviewable); the **Capability Matrix is the arsenal** (governed tools). Together they finish one job. **Memory** runs through the loop—auto-storing and deliberately storing valuable information, then recalling it to feed later decisions—until the business goal is met.
 
 <p align="center">
-  <img src="docs/neo-architecture-en.svg" alt="Neo agent closed loop: LLM decision brain, DAG scheduler, Capability Matrix arsenal, Memory" width="920" />
+  <img src="docs/neo-architecture-en.webp" alt="Neo agent closed loop: LLM decision brain, DAG scheduler, Capability Matrix arsenal, Memory" width="920" />
 </p>
 
 | Dimension | Component | Business meaning |

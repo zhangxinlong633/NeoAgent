@@ -11,7 +11,7 @@ Neo 接收可执行的目标（状态核查、材料整理、固定运维流程�
 Neo 将 Agent 做成可闭环的办事系统：**大模型是决策大脑**（理解目标并生成或选用 DAG）；**DAG 是调度框架**（按图推进、路径可复查）；**Capability Matrix 是武器库**（提供受控工具）；二者结合把一件事办完。贯穿全程的 **Memory** 自动或定量存储有价值信息，并召回反哺决策，直至达成业务目标。
 
 <p align="center">
-  <img src="docs/neo-architecture-zh.svg" alt="Neo Agent 闭环架构：LLM 决策大脑、DAG 调度、Capability Matrix 武器库、Memory 自主记忆" width="920" />
+  <img src="docs/neo-architecture-zh.webp" alt="Neo Agent 闭环架构：LLM 决策大脑、DAG 调度、Capability Matrix 武器库、Memory 自主记忆" width="920" />
 </p>
 
 | 维度 | 组件 | 业务含义 |

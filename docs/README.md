@@ -15,7 +15,7 @@
 |------|------|
 | `examples.md` | 命令行使用样例（对话、矩阵、DAG、plan/run、排错） |
 | `architecture.md` | 智能体目标架构（调度/执行/规划）与本仓库实现对照 |
-| `neo-architecture-zh.svg` / `neo-architecture-en.svg` | README 开篇运行时架构图（双路径 + Memory） |
+| `neo-architecture-*.webp`（README 引用）/ `*.svg`（源稿）/ `*.png`（备用） | 运行时架构图（双路径 + Memory）；GitHub README 用 WebP |
 | `applications.md` | 应用场景、问题域与生态位（基础 / 行业 / 未来） |
 | `tool.md` | Capability Matrix、commands、MCP、能力目录、Unix 白名单 |
 | `dag.md` | DAG、plan/run、workflow 目录 |
