@@ -77,6 +77,7 @@ static void print_usage(const char *prog) {
   fprintf(stderr, "  -S, --session ID[,ID...]  Load session(s); write turn to the first ID\n");
   fprintf(stderr, "  --session-list      List saved sessions under .neo/sessions/ and exit\n");
   fprintf(stderr, "  --session-clear ID  Delete a saved session file and exit\n");
+  fprintf(stderr, "  --role NAME         Use config roles.NAME prompt for this turn (with -S)\n");
   fprintf(stderr, "  -o, --output FILE   (with plan/run) Save planned dags JSON\n");
   fprintf(stderr, "  --steps N           (with plan/run) Soft target step count (default 10, max 32)\n");
   fprintf(stderr, "  -h, --help          Show this help\n");
@@ -264,6 +265,7 @@ int main(int argc, char **argv) {
   const char *session_spec = NULL;
   int session_clear = 0;
   int session_list = 0;
+  const char *role_name = NULL;
   int dag_mode = 0;
   const char *dag_name = NULL;
   int memory_mode = 0; /* 1=recall 2=store */
@@ -404,6 +406,12 @@ int main(int argc, char **argv) {
       if (arg_start + 1 >= argc) { fprintf(stderr, "neo: --session-clear requires ID\n"); return 1; }
       session_spec = argv[arg_start + 1];
       session_clear = 1;
+      arg_start += 2;
+      continue;
+    }
+    if (strcmp(argv[arg_start], "--role") == 0) {
+      if (arg_start + 1 >= argc) { fprintf(stderr, "neo: --role requires NAME\n"); return 1; }
+      role_name = argv[arg_start + 1];
       arg_start += 2;
       continue;
     }
@@ -703,6 +711,34 @@ int main(int argc, char **argv) {
     capability_matrix_free(&mx);
   }
 
+  /* 多角色同会话：本轮注入 ## Role；历史仍共享 -S 落盘。 */
+  if (role_name) {
+    const neo_role_t *role = config_find_role(&conf, role_name);
+    if (conf.role_count <= 0) {
+      fprintf(stderr, "neo: --role requires config roles{} (none configured)\n");
+      config_free(&conf);
+      free(system_prompt);
+      free(user_message);
+      free(tmp);
+      return 1;
+    }
+    if (!role || !role->prompt) {
+      fprintf(stderr, "neo: unknown --role '%s'\n", role_name);
+      config_free(&conf);
+      free(system_prompt);
+      free(user_message);
+      free(tmp);
+      return 1;
+    }
+    strncat(system_prompt, "\n\n## Role: ", SYSTEM_MAX - strlen(system_prompt) - 1);
+    strncat(system_prompt, role->name, SYSTEM_MAX - strlen(system_prompt) - 1);
+    strncat(system_prompt, "\n\n", SYSTEM_MAX - strlen(system_prompt) - 1);
+    strncat(system_prompt, role->prompt, SYSTEM_MAX - strlen(system_prompt) - 1);
+    strncat(system_prompt, "\n", SYSTEM_MAX - strlen(system_prompt) - 1);
+    if (verbose || debug)
+      fprintf(stderr, "neo role: %s\n", role->name);
+  }
+
   if (debug)
     debug_print_request(&conf, conf.model.base_url, conf.model.name, conf.model.max_tokens, conf.model.temperature,
                        system_prompt, user_message);
@@ -777,10 +813,23 @@ int main(int argc, char **argv) {
   {
     int max_turns = conf.session_max_turns > 0 ? conf.session_max_turns : 10;
     if (err == 0 && session_write_id && resp.data && resp.size) {
-      if (neo_session_append_turn(session_write_id, user_message, resp.data, max_turns) != 0)
+      const char *to_save = resp.data;
+      char *prefixed = NULL;
+      if (role_name) {
+        size_t rn = strlen(role_name);
+        size_t need = rn + 3 + resp.size + 1; /* [NAME] + space + body */
+        prefixed = malloc(need);
+        if (prefixed) {
+          snprintf(prefixed, need, "[%s] %s", role_name, resp.data);
+          to_save = prefixed;
+        }
+      }
+      if (neo_session_append_turn(session_write_id, user_message, to_save, max_turns) != 0)
         fprintf(stderr, "neo: warning: failed to save session '%s'\n", session_write_id);
       else if (verbose || debug)
-        fprintf(stderr, "neo session: saved id=%s\n", session_write_id);
+        fprintf(stderr, "neo session: saved id=%s%s%s\n", session_write_id,
+                role_name ? " role=" : "", role_name ? role_name : "");
+      free(prefixed);
     }
   }
   neo_session_free_ids(session_ids, n_session_ids);

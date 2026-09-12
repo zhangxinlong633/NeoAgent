@@ -361,6 +361,17 @@ void config_free(agent_config_t *c) {
   free_dags(c->dags, c->dag_count);
   c->dags = NULL;
   c->dag_count = 0;
+  if (c->roles) {
+    int i;
+    for (i = 0; i < c->role_count; i++) {
+      free(c->roles[i].name);
+      free(c->roles[i].description);
+      free(c->roles[i].prompt);
+    }
+    free(c->roles);
+    c->roles = NULL;
+    c->role_count = 0;
+  }
 }
 
 static int path_has_ext(const char *path, const char *ext) {
@@ -560,6 +571,112 @@ static int fill_session(agent_config_t *c, yyjson_val *obj) {
   v = yyjson_obj_get(obj, "max_turns");
   if (yyjson_is_int(v) || yyjson_is_uint(v)) c->session_max_turns = (int)yyjson_get_sint(v);
   return 0;
+}
+
+/* 角色 id：与 session id 同字符集，便于 CLI 与落盘前缀一致。 */
+static int role_id_ok(const char *id) {
+  size_t i, n;
+  if (!id || !id[0]) return 0;
+  n = strlen(id);
+  if (n > 64) return 0;
+  for (i = 0; i < n; i++) {
+    char ch = id[i];
+    if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') ||
+        ch == '_' || ch == '-')
+      continue;
+    return 0;
+  }
+  return 1;
+}
+
+/*
+ * 解析顶层 roles：{ name: { prompt, description? }, ... }。
+ * 不做什么：不从目录加载；不热更新。
+ */
+static int fill_roles(agent_config_t *c, yyjson_val *obj) {
+  size_t idx, max;
+  yyjson_val *key, *val;
+  neo_role_t *arr = NULL;
+  int n = 0, cap = 0;
+
+  if (!yyjson_is_obj(obj)) {
+    fprintf(stderr, "neo: config error at /roles: expected object\n");
+    return -1;
+  }
+  yyjson_obj_foreach(obj, idx, max, key, val) {
+    const char *name;
+    yyjson_val *vp, *vd;
+    neo_role_t *slot;
+    int j;
+    if (!yyjson_is_str(key)) {
+      fprintf(stderr, "neo: config error at /roles: key must be string\n");
+      goto fail;
+    }
+    name = yyjson_get_str(key);
+    if (!role_id_ok(name)) {
+      fprintf(stderr, "neo: config error at /roles: invalid id '%s' (use [A-Za-z0-9_-], max 64)\n",
+              name ? name : "");
+      goto fail;
+    }
+    if (!yyjson_is_obj(val)) {
+      fprintf(stderr, "neo: config error at /roles/%s: expected object\n", name);
+      goto fail;
+    }
+    vp = yyjson_obj_get(val, "prompt");
+    if (!yyjson_is_str(vp) || !yyjson_get_str(vp)[0]) {
+      fprintf(stderr, "neo: config error at /roles/%s: prompt string required\n", name);
+      goto fail;
+    }
+    for (j = 0; j < n; j++) {
+      if (arr[j].name && strcmp(arr[j].name, name) == 0) {
+        fprintf(stderr, "neo: config error at /roles: duplicate '%s'\n", name);
+        goto fail;
+      }
+    }
+    if (n >= cap) {
+      int ncap = cap ? cap * 2 : 4;
+      neo_role_t *grown = realloc(arr, (size_t)ncap * sizeof(neo_role_t));
+      if (!grown) goto fail;
+      arr = grown;
+      cap = ncap;
+    }
+    slot = &arr[n];
+    memset(slot, 0, sizeof(*slot));
+    slot->name = strdup(name);
+    slot->prompt = strdup(yyjson_get_str(vp));
+    vd = yyjson_obj_get(val, "description");
+    if (yyjson_is_str(vd)) slot->description = strdup(yyjson_get_str(vd));
+    if (!slot->name || !slot->prompt || (yyjson_is_str(vd) && !slot->description)) {
+      free(slot->name);
+      free(slot->prompt);
+      free(slot->description);
+      goto fail;
+    }
+    n++;
+  }
+  c->roles = arr;
+  c->role_count = n;
+  return 0;
+fail:
+  if (arr) {
+    int k;
+    for (k = 0; k < n; k++) {
+      free(arr[k].name);
+      free(arr[k].description);
+      free(arr[k].prompt);
+    }
+    free(arr);
+  }
+  return -1;
+}
+
+const neo_role_t *config_find_role(const agent_config_t *c, const char *name) {
+  int i;
+  if (!c || !name) return NULL;
+  for (i = 0; i < c->role_count; i++) {
+    if (c->roles[i].name && strcmp(c->roles[i].name, name) == 0) return &c->roles[i];
+  }
+  return NULL;
 }
 
 static int fill_plan(agent_config_t *c, yyjson_val *obj) {
@@ -968,6 +1085,7 @@ int config_load_file(agent_config_t *c, const char *path) {
   if ((sec = yyjson_obj_get(root, "soul")) && fill_soul(c, sec) != 0) goto fail;
   if ((sec = yyjson_obj_get(root, "workspace")) && fill_workspace(c, sec) != 0) goto fail;
   if ((sec = yyjson_obj_get(root, "session")) && fill_session(c, sec) != 0) goto fail;
+  if ((sec = yyjson_obj_get(root, "roles")) && fill_roles(c, sec) != 0) goto fail;
   if ((sec = yyjson_obj_get(root, "plan")) && fill_plan(c, sec) != 0) goto fail;
   if ((sec = yyjson_obj_get(root, "dag")) && fill_dag_runtime(c, sec) != 0) goto fail;
   if ((sec = yyjson_obj_get(root, "bootstrap")) &&

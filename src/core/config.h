@@ -44,6 +44,13 @@ typedef struct {
   int max_chars_per_file;
 } rules_config_t;
 
+/* 会话内角色：--role 切换；prompt 注入 ## Role */
+typedef struct {
+  char *name;
+  char *description; /* 可选 */
+  char *prompt;      /* 必填 */
+} neo_role_t;
+
 /* Anchor prompts to the process working directory (run neo from repo root). */
 typedef struct {
   int prompt_cwd; /* 1: append cwd to system prompt */
@@ -172,6 +179,8 @@ typedef struct {
   dag_t *dags;
   int dag_count;
   int session_max_turns;
+  neo_role_t *roles;
+  int role_count;
 } agent_config_t;
 
 void config_init(agent_config_t *c);
@@ -179,6 +188,7 @@ void config_free(agent_config_t *c);
 int config_load_file(agent_config_t *c, const char *path);
 void config_apply_env(agent_config_t *c);
 const dag_t *config_find_dag(const agent_config_t *c, const char *name);
+const neo_role_t *config_find_role(const agent_config_t *c, const char *name);
 
 /* 追加单个 workflow 对象（内联数组或目录文件共用）。err_ctx 用于错误路径文案。 */
 int config_append_dag_val(agent_config_t *c, yyjson_val *wobj, const char *err_ctx);

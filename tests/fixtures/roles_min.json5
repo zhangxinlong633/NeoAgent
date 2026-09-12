@@ -1,0 +1,18 @@
+{
+  model: {
+    provider: "test",
+    base_url: "http://127.0.0.1:9",
+    name: "x",
+    api_key: "k",
+  },
+  roles: {
+    researcher: {
+      description: "调研",
+      prompt: "只做调研，不写终稿。",
+    },
+    writer: {
+      prompt: "只写终稿。",
+    },
+  },
+  capability_matrix: { enabled: false },
+}

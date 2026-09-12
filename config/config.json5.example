@@ -46,6 +46,17 @@
     max_turns: 10,
   },
 
+  // Optional same-session roles for CLI --role NAME (shared -S history):
+  // roles: {
+  //   researcher: {
+  //     description: "调研",
+  //     prompt: "本轮只做调研：列事实与待核实点；不要写终稿。",
+  //   },
+  //   writer: {
+  //     prompt: "本轮只写面向用户的终稿；沿用历史调研结论。",
+  //   },
+  // },
+
   capability_matrix: {
     enabled: true,
     root: ".",

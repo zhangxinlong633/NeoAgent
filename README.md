@@ -35,6 +35,7 @@ The execution spine is **DAG ∥ Capability Matrix ∥ Policy**; LLM and Memory 
 13. Profiles / diagnostics — `-p` / `-m` / `-v` / `-d`
 14. Claw prompt blocks — soul / bootstrap / rules / memory ([`docs/claw.md`](docs/claw.md))
 15. JSON5 config — top-level `capability_matrix`
+16. Session roles — `--role NAME` with config `roles`; shared `-S` history; assistant saved as `[NAME] …`
 
 ---
 
@@ -62,6 +63,10 @@ cp config/config.json5.example config/config.json5
 ./neo -S ship,cook -R "Combine both threads"
 ./neo --session-list
 ./neo --session-clear ship
+
+# Same session, switch roles (requires config roles{})
+./neo -S ship --role researcher -R "Research spaceships first"
+./neo -S ship --role writer -R "Turn that into a short article"
 
 ./neo dag run show_time
 ./neo run "show the system time"

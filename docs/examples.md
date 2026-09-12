@@ -159,6 +159,15 @@ neo tool: read_file
 
 `-S` / `--session ID[,ID...]` 按序加载多个会话历史并注入本次请求；**本轮只写回第一个 ID**（`.neo/sessions/<ID>.json`）。id 仅 `[A-Za-z0-9_-]`，最多 8 个、不可重复。`--session-list` 列出已有会话；`--session-clear` 仅清除单个 id。轮数上限为 `session.max_turns`（默认 10）。与 `neo daemon` 内存会话独立。
 
+同会话切换角色（配置顶层 `roles`，见 `config/config.json5.example`）：
+
+```bash
+./neo -S demo --role researcher -R "先调研"
+./neo -S demo --role writer -R "写成短文"
+```
+
+`--role NAME` 向 system 注入 `## Role`；落盘时 assistant 前缀 `[NAME] `。无 `--role` 时行为不变。
+
 ### 3.6 终端 Markdown 与提示词评测
 
 ```bash

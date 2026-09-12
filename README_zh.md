@@ -35,6 +35,7 @@ Neo Agent 是面向明确目标的可移植 Agent 运行时。它在可控边界
 13. Profile / 诊断 — `-p` / `-m` / `-v` / `-d`
 14. Claw 拼装 — soul / bootstrap / rules / memory（[`docs/claw.md`](docs/claw.md)）
 15. JSON5 配置 — 顶层键 `capability_matrix`
+16. 会话角色 — `--role NAME` + 配置 `roles`；同一 `-S` 共享历史；落盘 `[NAME] …`
 
 ---
 
@@ -62,6 +63,10 @@ cp config/config.json5.example config/config.json5
 ./neo -S ship,cook -R "结合两边继续"
 ./neo --session-list
 ./neo --session-clear ship
+
+# 同会话切换角色（须配置 roles）
+./neo -S ship --role researcher -R "先调研飞船"
+./neo -S ship --role writer -R "根据上文写成短文"
 
 ./neo dag run show_time
 ./neo run "查看系统时间"
