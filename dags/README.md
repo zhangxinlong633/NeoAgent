@@ -4,7 +4,7 @@
 
 Planner（`neo plan` / `neo run`）生成 catalog（含 `when` / `when_not` / `requires` / `outcome`），并优先输出 `{"use":["name"]}`；无合适条目时再现编 `{"dags":[...]}`。
 
-权威说明：[`docs/dag.md`](../docs/dag.md)、[`docs/examples.md`](../docs/examples.md)（含 **开箱组合** 与 `workspace_brief`）、[`docs/applications.md`](../docs/applications.md)、[`docs/architecture.md`](../docs/architecture.md)、[`AGENTS.md`](../AGENTS.md) §4.1。
+权威说明：[`docs/dag.md`](../docs/dag.md)、[`docs/manual.md`](../docs/manual.md)、[`docs/examples.md`](../docs/examples.md)（含 **开箱组合** 与 `workspace_brief`）、[`docs/applications.md`](../docs/applications.md)、[`docs/architecture.md`](../docs/architecture.md)、[`AGENTS.md`](../AGENTS.md) §4.1。
 
 ## 职责边界
 
