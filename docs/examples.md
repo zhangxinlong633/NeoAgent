@@ -131,7 +131,7 @@ neo tool: read_file
 ### 3.3.1 城市天气（目录能力 `weather_wttr`）
 
 ```bash
-./neo -R "看下南京今天的天气"
+./neo "看下南京今天的天气"
 # 或显式：./neo "调用 weather_wttr，city 为 南京"
 ```
 
@@ -149,21 +149,25 @@ neo tool: read_file
 
 ### 3.5 具名会话（跨进程上下文）
 
+普通聊天默认写入会话 `default`（`.neo/sessions/default.json`），无需 `-S` 即可续聊。
+
 ```bash
-./neo -S demo -R "飞船怎么做"
-./neo -S demo -R "展开第 4 种：真正的载人/货运飞船"
-./neo -S demo,other -R "结合两个会话继续"
+./neo "飞船怎么做"
+./neo "展开第 4 种：真正的载人/货运飞船"
+./neo -N "换个话题从头聊"   # 将 default 归档为 YYYYMMDD-HHMMSS，再写新的 default
 ./neo --session-list
-./neo --session-clear demo
+./neo -S ship "只用名为 ship 的会话"
+./neo -S demo,other "结合两个会话继续"
+./neo --session-clear ship
 ```
 
-`-S` / `--session ID[,ID...]` 按序加载多个会话历史并注入本次请求；**本轮只写回第一个 ID**（`.neo/sessions/<ID>.json`）。id 仅 `[A-Za-z0-9_-]`，最多 8 个、不可重复。`--session-list` 列出已有会话；`--session-clear` 仅清除单个 id。轮数上限为 `session.max_turns`（默认 10）。与 `neo daemon` 内存会话独立。
+`-S` / `--session ID[,ID...]` 按序加载多个会话历史并注入本次请求；**本轮只写回第一个 ID**。省略 `-S` 时等价于 `-S default`。id 仅 `[A-Za-z0-9_-]`，最多 8 个、不可重复。`-N` / `--session-new` 与 `-S` 不能同用。`--session-list` 列出已有会话；`--session-clear` 仅清除单个 id。轮数上限为 `session.max_turns`（默认 10）。与 `neo daemon` 内存会话独立。
 
 同会话切换角色（配置顶层 `roles`，见 `config/config.json5.example`）：
 
 ```bash
-./neo -S demo --role researcher -R "先调研"
-./neo -S demo --role writer -R "写成短文"
+./neo -S demo --role researcher "先调研"
+./neo -S demo --role writer "写成短文"
 ```
 
 `--role NAME` 向 system 注入 `## Role`；落盘时 assistant 前缀 `[NAME] `。无 `--role` 时行为不变。
@@ -171,11 +175,43 @@ neo tool: read_file
 ### 3.6 终端 Markdown 与提示词评测
 
 ```bash
-./neo -R "用表格对比 DAG 与 Capability Matrix 的职责"
+./neo "用表格对比 DAG 与 Capability Matrix 的职责"
+./neo --no-render "同上，原始 Markdown"
 make test-prompts-dry
 ```
 
-`-R` / `--render` 用 md4c 渲染助手回复。领域提示词评测见 [`tests/prompts/README.md`](../tests/prompts/README.md)（**不**进默认 `make test`）。
+助手回复**默认**经 md4c 渲染到终端；`--no-render` 关闭。`-R` / `--render` 仍可显式打开（与默认相同）。领域提示词评测见 [`tests/prompts/README.md`](../tests/prompts/README.md)（**不**进默认 `make test`）。
+
+### 3.7 机读输出（OpenAI chat.completion JSON / 文件）
+
+便于管道与其它程序对接（诊断仍走 stderr）。`-j` 输出与 OpenAI Chat Completions 响应同形：
+
+```bash
+./neo -j "用一句话介绍 Neo"
+# → stdout:
+# {
+#   "id": "chatcmpl-neo-…",
+#   "object": "chat.completion",
+#   "created": 1690000000,
+#   "model": "…",
+#   "choices": [{"index":0,"message":{"role":"assistant","content":"…"},"finish_reason":"stop"}],
+#   "usage": {"prompt_tokens":0,"completion_tokens":0,"total_tokens":0},
+#   "neo": {"session":"default","role":null}
+# }
+
+./neo -o /tmp/neo-reply.txt "只把原文写入文件"
+./neo -j -o /tmp/neo-reply.json "chat.completion JSON 写入文件"
+```
+
+取正文：`choices[0].message.content`（与官方 SDK 一致）。`neo.session` / `neo.role` 为扩展字段。失败时为 `{"error":{"message","type","code","param"}}`。
+
+| 组合 | 行为 |
+|------|------|
+| （默认） | 终端渲染到 stdout |
+| `-j` / `--json` | stdout：OpenAI `chat.completion` JSON |
+| `-o FILE` | 原文写入 FILE，不打印到 stdout |
+| `-j -o FILE` | `chat.completion` JSON 写入 FILE |
+| `plan`/`run` 的 `-o` | 仍表示保存规划出的 dags JSON |
 
 ## 4. 确定性 DAG：`dag run`
 

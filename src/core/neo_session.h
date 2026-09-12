@@ -15,6 +15,9 @@ extern "C" {
 /* 单次 -S 最多混入的会话数（含写回目标）。 */
 #define NEO_SESSION_MAX_IDS 8
 
+/* 未指定 -S 时使用的默认会话 id。 */
+#define NEO_SESSION_DEFAULT_ID "default"
+
 typedef struct {
   char id[65];
   int n_messages; /* messages 条数（一轮 user+assistant = 2） */
@@ -55,6 +58,12 @@ int neo_session_append_turn(const char *id, const char *user, const char *assist
 
 /* 删除会话文件（不存在也算成功）。 */
 int neo_session_clear(const char *id);
+
+/*
+ * 将 default 会话 rename 为 YYYYMMDD-HHMMSS（冲突则加 -n）。
+ * 无 default 文件则成功且 *out_id 为空。成功 0。
+ */
+int neo_session_archive_default(char *out_id, size_t out_sz);
 
 /*
  * 列出 .neo/sessions/ 下各 *.json（按 id 字典序）。

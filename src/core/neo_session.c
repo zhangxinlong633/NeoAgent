@@ -349,6 +349,46 @@ int neo_session_clear(const char *id) {
   return 0;
 }
 
+/*
+ * 归档 default：rename 文件，避免复制丢数据；目标 id 冲突则加 -1/-2…
+ * 无 default 不算失败（新对话场景）。
+ */
+int neo_session_archive_default(char *out_id, size_t out_sz) {
+  char from[256], to[256];
+  char base[32], try_id[65];
+  time_t now;
+  struct tm *tm;
+  struct stat st;
+  int n;
+
+  if (out_id && out_sz) out_id[0] = '\0';
+  if (neo_session_path(NEO_SESSION_DEFAULT_ID, from, sizeof(from)) != 0) return -1;
+  if (stat(from, &st) != 0) {
+    if (errno == ENOENT) return 0;
+    return -1;
+  }
+
+  now = time(NULL);
+  tm = localtime(&now);
+  if (!tm || strftime(base, sizeof(base), "%Y%m%d-%H%M%S", tm) == 0) return -1;
+
+  for (n = 0; n < 100; n++) {
+    if (n == 0)
+      snprintf(try_id, sizeof(try_id), "%s", base);
+    else
+      snprintf(try_id, sizeof(try_id), "%s-%d", base, n);
+    if (!neo_session_id_ok(try_id)) return -1;
+    if (neo_session_path(try_id, to, sizeof(to)) != 0) return -1;
+    if (stat(to, &st) == 0) continue; /* 已存在，换下一个 */
+    if (rename(from, to) != 0) return -1;
+    if (out_id && out_sz) {
+      snprintf(out_id, out_sz, "%s", try_id);
+    }
+    return 0;
+  }
+  return -1;
+}
+
 void neo_session_list_free(neo_session_info_t *list, int n) {
   (void)n;
   free(list);

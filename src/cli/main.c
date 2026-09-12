@@ -13,6 +13,7 @@
 #include "neo_session.h"
 #include "plan.h"
 #include "dag.h"
+#include "yyjson.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,12 +74,16 @@ static void print_usage(const char *prog) {
   fprintf(stderr, "  -m, --model NAME    Override model name\n");
   fprintf(stderr, "  -d, --debug         Print system prompt, user message and request params to stderr\n");
   fprintf(stderr, "  -v, --verbose       Step / capability / memory summaries on stderr\n");
-  fprintf(stderr, "  -R, --render        Render assistant Markdown to the terminal (md4c)\n");
-  fprintf(stderr, "  -S, --session ID[,ID...]  Load session(s); write turn to the first ID\n");
+  fprintf(stderr, "  -R, --render        Render assistant Markdown (default: on)\n");
+  fprintf(stderr, "  --no-render         Print raw Markdown / plain text (disable render)\n");
+  fprintf(stderr, "  -S, --session ID[,ID...]  Session id(s); default is \"%s\" if omitted\n",
+          NEO_SESSION_DEFAULT_ID);
+  fprintf(stderr, "  -N, --session-new   Archive default session to YYYYMMDD-HHMMSS, then chat fresh\n");
   fprintf(stderr, "  --session-list      List saved sessions under .neo/sessions/ and exit\n");
   fprintf(stderr, "  --session-clear ID  Delete a saved session file and exit\n");
-  fprintf(stderr, "  --role NAME         Use config roles.NAME prompt for this turn (with -S)\n");
-  fprintf(stderr, "  -o, --output FILE   (with plan/run) Save planned dags JSON\n");
+  fprintf(stderr, "  --role NAME         Use config roles.NAME prompt for this turn\n");
+  fprintf(stderr, "  -j, --json          Chat: OpenAI chat.completion JSON on stdout\n");
+  fprintf(stderr, "  -o, --output FILE   Chat: write reply/JSON to FILE; plan/run: save dags JSON\n");
   fprintf(stderr, "  --steps N           (with plan/run) Soft target step count (default 10, max 32)\n");
   fprintf(stderr, "  -h, --help          Show this help\n");
   fprintf(stderr, "  daemon              Run as daemon: read from stdin, reply to stdout\n");
@@ -104,6 +109,130 @@ static void neo_print_assistant(const char *data, size_t size, int render) {
   }
   fwrite(data, 1, size, stdout);
   if (data[size - 1] != '\n') putchar('\n');
+}
+
+/* 将助手原文写入文件；成功 0。 */
+static int neo_write_reply_file(const char *path, const char *data, size_t size) {
+  FILE *f;
+  if (!path || !path[0]) return -1;
+  f = fopen(path, "w");
+  if (!f) return -1;
+  if (data && size) {
+    if (fwrite(data, 1, size, f) != size) {
+      fclose(f);
+      return -1;
+    }
+    if (data[size - 1] != '\n' && fputc('\n', f) == EOF) {
+      fclose(f);
+      return -1;
+    }
+  }
+  if (fclose(f) != 0) return -1;
+  return 0;
+}
+
+/*
+ * 聊天机读输出：OpenAI chat.completion 兼容 JSON（便于现有 SDK/脚本对接）。
+ * 成功：id/object/created/model/choices[0].message.content/finish_reason/usage；
+ * 另附 neo.session / neo.role（扩展字段，标准客户端可忽略）。
+ * 失败：{"error":{"message","type","code"}}。
+ */
+static int neo_emit_chat_json(FILE *fp, int ok, const char *text, size_t text_len,
+                              const char *session_id, const char *role,
+                              const char *model, const char *error) {
+  yyjson_mut_doc *doc;
+  yyjson_mut_val *root;
+  char *json;
+  int rc = -1;
+  time_t created;
+
+  if (!fp) return -1;
+  created = time(NULL);
+  doc = yyjson_mut_doc_new(NULL);
+  if (!doc) return -1;
+  root = yyjson_mut_obj(doc);
+  if (!root) {
+    yyjson_mut_doc_free(doc);
+    return -1;
+  }
+  yyjson_mut_doc_set_root(doc, root);
+
+  if (!ok) {
+    yyjson_mut_val *err = yyjson_mut_obj(doc);
+    if (!err) {
+      yyjson_mut_doc_free(doc);
+      return -1;
+    }
+    yyjson_mut_obj_add_str(doc, err, "message",
+                           error && error[0] ? error : "failed");
+    yyjson_mut_obj_add_str(doc, err, "type", "neo_error");
+    yyjson_mut_obj_add_str(doc, err, "code", "llm_request_failed");
+    yyjson_mut_obj_add_null(doc, err, "param");
+    yyjson_mut_obj_add_val(doc, root, "error", err);
+  } else {
+    yyjson_mut_val *choices, *choice, *message, *usage, *neo;
+    char idbuf[64];
+
+    snprintf(idbuf, sizeof(idbuf), "chatcmpl-neo-%ld", (long)created);
+    yyjson_mut_obj_add_strcpy(doc, root, "id", idbuf);
+    yyjson_mut_obj_add_str(doc, root, "object", "chat.completion");
+    yyjson_mut_obj_add_int(doc, root, "created", (int64_t)created);
+    yyjson_mut_obj_add_strcpy(doc, root, "model",
+                             model && model[0] ? model : "unknown");
+
+    message = yyjson_mut_obj(doc);
+    choice = yyjson_mut_obj(doc);
+    choices = yyjson_mut_arr(doc);
+    if (!message || !choice || !choices) {
+      yyjson_mut_doc_free(doc);
+      return -1;
+    }
+    yyjson_mut_obj_add_str(doc, message, "role", "assistant");
+    if (text && text_len)
+      yyjson_mut_obj_add_strn(doc, message, "content", text, text_len);
+    else
+      yyjson_mut_obj_add_str(doc, message, "content", "");
+
+    yyjson_mut_obj_add_int(doc, choice, "index", 0);
+    yyjson_mut_obj_add_val(doc, choice, "message", message);
+    yyjson_mut_obj_add_null(doc, choice, "logprobs");
+    yyjson_mut_obj_add_str(doc, choice, "finish_reason", "stop");
+    yyjson_mut_arr_add_val(choices, choice);
+    yyjson_mut_obj_add_val(doc, root, "choices", choices);
+
+    usage = yyjson_mut_obj(doc);
+    if (!usage) {
+      yyjson_mut_doc_free(doc);
+      return -1;
+    }
+    /* 本地封装不拆 usage；填 0 保持字段形状兼容 */
+    yyjson_mut_obj_add_int(doc, usage, "prompt_tokens", 0);
+    yyjson_mut_obj_add_int(doc, usage, "completion_tokens", 0);
+    yyjson_mut_obj_add_int(doc, usage, "total_tokens", 0);
+    yyjson_mut_obj_add_val(doc, root, "usage", usage);
+
+    neo = yyjson_mut_obj(doc);
+    if (!neo) {
+      yyjson_mut_doc_free(doc);
+      return -1;
+    }
+    if (session_id && session_id[0])
+      yyjson_mut_obj_add_strcpy(doc, neo, "session", session_id);
+    else
+      yyjson_mut_obj_add_null(doc, neo, "session");
+    if (role && role[0])
+      yyjson_mut_obj_add_strcpy(doc, neo, "role", role);
+    else
+      yyjson_mut_obj_add_null(doc, neo, "role");
+    yyjson_mut_obj_add_val(doc, root, "neo", neo);
+  }
+
+  json = yyjson_mut_write(doc, YYJSON_WRITE_NOFLAG, NULL);
+  yyjson_mut_doc_free(doc);
+  if (!json) return -1;
+  if (fputs(json, fp) >= 0 && fputc('\n', fp) != EOF) rc = 0;
+  free(json);
+  return rc;
 }
 
 /* stderr 一行说明本轮 Memory 注入方式（-v / -d / memory 子命令）。 */
@@ -261,10 +390,12 @@ int main(int argc, char **argv) {
   int daemon_mode = 0;
   int debug = 0;
   int verbose = 0;
-  int render = 0;
+  int render = 1; /* 默认终端 Markdown 渲染；--no-render 关闭 */
+
   const char *session_spec = NULL;
   int session_clear = 0;
   int session_list = 0;
+  int session_new = 0;
   const char *role_name = NULL;
   int dag_mode = 0;
   const char *dag_name = NULL;
@@ -273,7 +404,8 @@ int main(int argc, char **argv) {
   int plan_mode = 0;
   int run_mode = 0;
   int legacy_plan_run = 0;
-  const char *plan_out = NULL;
+  const char *plan_out = NULL; /* -o：plan/run 存 DAG；chat 写回复 */
+  int out_json = 0;
   int cli_steps = 0; /* 0 = unset; resolved later */
 
   while (arg_start < argc) {
@@ -304,6 +436,11 @@ int main(int argc, char **argv) {
       if (arg_start + 1 >= argc) { fprintf(stderr, "neo: --output requires FILE\n"); return 1; }
       plan_out = argv[arg_start + 1];
       arg_start += 2;
+      continue;
+    }
+    if (strcmp(argv[arg_start], "--json") == 0 || strcmp(argv[arg_start], "-j") == 0) {
+      out_json = 1;
+      arg_start++;
       continue;
     }
     if (strcmp(argv[arg_start], "--steps") == 0) {
@@ -391,10 +528,20 @@ int main(int argc, char **argv) {
       arg_start++;
       continue;
     }
+    if (strcmp(argv[arg_start], "--no-render") == 0) {
+      render = 0;
+      arg_start++;
+      continue;
+    }
     if (strcmp(argv[arg_start], "--session") == 0 || strcmp(argv[arg_start], "-S") == 0) {
       if (arg_start + 1 >= argc) { fprintf(stderr, "neo: --session requires ID[,ID...]\n"); return 1; }
       session_spec = argv[arg_start + 1];
       arg_start += 2;
+      continue;
+    }
+    if (strcmp(argv[arg_start], "--session-new") == 0 || strcmp(argv[arg_start], "-N") == 0) {
+      session_new = 1;
+      arg_start++;
       continue;
     }
     if (strcmp(argv[arg_start], "--session-list") == 0) {
@@ -592,10 +739,31 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  /* -N：把 default 挪到时间戳 id，再在空的 default 上聊（可与消息同用；不可与 -S 同用）。 */
+  if (session_new) {
+    char archived[65];
+    if (session_spec) {
+      fprintf(stderr, "neo: --session-new cannot combine with -S/--session\n");
+      return 1;
+    }
+    if (neo_session_archive_default(archived, sizeof(archived)) != 0) {
+      fprintf(stderr, "neo: failed to archive default session\n");
+      return 1;
+    }
+    if (archived[0])
+      fprintf(stderr, "neo session: archived default -> %s\n", archived);
+    else if (verbose)
+      fprintf(stderr, "neo session: default was empty (nothing archived)\n");
+  }
+
   if (arg_start >= argc) {
+    if (session_new) return 0;
     fprintf(stderr, "Usage: neo [OPTIONS] \"your message\" or neo run \"task\" or neo daemon\n");
     return 1;
   }
+
+  /* 单次聊天默认落盘到 default（显式 -S 仍可覆盖）。 */
+  if (!session_spec) session_spec = NEO_SESSION_DEFAULT_ID;
 
   agent_config_t conf;
   config_init(&conf);
@@ -832,19 +1000,74 @@ int main(int argc, char **argv) {
       free(prefixed);
     }
   }
-  neo_session_free_ids(session_ids, n_session_ids);
-  config_free(&conf);
-  free(system_prompt);
-  free(user_message);
-  free(tmp);
 
-  if (err != 0) {
-    fprintf(stderr, "neo: LLM request failed\n");
+  /* 机读 / 文件输出须在释放 config 与 session 前完成（要用 model/session 名）。 */
+  {
+    int emit_rc = 0;
+    const char *model_name = conf.model.name;
+    FILE *out_fp = NULL;
+
+    if (err != 0) {
+      if (out_json) {
+        if (plan_out && plan_out[0]) {
+          out_fp = fopen(plan_out, "w");
+          if (!out_fp) {
+            fprintf(stderr, "neo: cannot write %s\n", plan_out);
+            emit_rc = -1;
+          } else {
+            emit_rc = neo_emit_chat_json(out_fp, 0, NULL, 0, session_write_id, role_name,
+                                         model_name, "LLM request failed");
+            fclose(out_fp);
+          }
+        } else {
+          emit_rc = neo_emit_chat_json(stdout, 0, NULL, 0, session_write_id, role_name,
+                                       model_name, "LLM request failed");
+        }
+      } else {
+        fprintf(stderr, "neo: LLM request failed\n");
+      }
+      neo_session_free_ids(session_ids, n_session_ids);
+      config_free(&conf);
+      free(system_prompt);
+      free(user_message);
+      free(tmp);
+      llm_response_free(&resp);
+      return 1;
+    }
+
+    if (out_json) {
+      if (plan_out && plan_out[0]) {
+        out_fp = fopen(plan_out, "w");
+        if (!out_fp) {
+          fprintf(stderr, "neo: cannot write %s\n", plan_out);
+          emit_rc = -1;
+        } else {
+          emit_rc = neo_emit_chat_json(out_fp, 1, resp.data, resp.size, session_write_id,
+                                       role_name, model_name, NULL);
+          fclose(out_fp);
+        }
+      } else {
+        emit_rc = neo_emit_chat_json(stdout, 1, resp.data, resp.size, session_write_id,
+                                     role_name, model_name, NULL);
+      }
+    } else if (plan_out && plan_out[0]) {
+      /* 聊天 -o：只写原文到文件，不刷终端（便于脚本对接） */
+      if (neo_write_reply_file(plan_out, resp.data, resp.size) != 0) {
+        fprintf(stderr, "neo: cannot write %s\n", plan_out);
+        emit_rc = -1;
+      } else if (verbose || debug) {
+        fprintf(stderr, "neo: wrote reply to %s\n", plan_out);
+      }
+    } else if (resp.data && resp.size) {
+      neo_print_assistant(resp.data, resp.size, render);
+    }
+
+    neo_session_free_ids(session_ids, n_session_ids);
+    config_free(&conf);
+    free(system_prompt);
+    free(user_message);
+    free(tmp);
     llm_response_free(&resp);
-    return 1;
+    return emit_rc != 0 ? 1 : 0;
   }
-  if (resp.data && resp.size)
-    neo_print_assistant(resp.data, resp.size, render);
-  llm_response_free(&resp);
-  return 0;
 }

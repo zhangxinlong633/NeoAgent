@@ -80,6 +80,30 @@ int main(void) {
   (void)neo_session_clear(id_a);
   (void)neo_session_clear(id_b);
 
+  /* 归档 default */
+  {
+    char archived[65];
+    (void)neo_session_clear(NEO_SESSION_DEFAULT_ID);
+    if (neo_session_archive_default(archived, sizeof(archived)) != 0) FAIL("archive empty");
+    if (archived[0]) FAIL("empty should not set id");
+    if (neo_session_append_turn(NEO_SESSION_DEFAULT_ID, "u", "a", 10) != 0) FAIL("default turn");
+    if (neo_session_archive_default(archived, sizeof(archived)) != 0) FAIL("archive");
+    if (!archived[0] || !neo_session_id_ok(archived)) FAIL("archive id");
+    if (strcmp(archived, NEO_SESSION_DEFAULT_ID) == 0) FAIL("archive != default");
+    if (neo_session_load(NEO_SESSION_DEFAULT_ID, &msgs, &n) != 0) FAIL("default after");
+    if (n != 0) {
+      neo_session_free(msgs, n);
+      FAIL("default cleared by rename");
+    }
+    if (neo_session_load(archived, &msgs, &n) != 0) FAIL("load archived");
+    if (n != 2) {
+      neo_session_free(msgs, n);
+      FAIL("archived msgs");
+    }
+    neo_session_free(msgs, n);
+    (void)neo_session_clear(archived);
+  }
+
   fprintf(stderr, "ok test_neo_session\n");
   return 0;
 }

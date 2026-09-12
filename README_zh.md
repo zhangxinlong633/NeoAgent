@@ -27,15 +27,17 @@ Neo Agent 是面向明确目标的可移植 Agent 运行时。它在可控边界
 5. Capability Matrix — builtin、白名单命令、`capabilities/` 目录包
 6. MCP（stdio）— `mcp_servers` → `mcp_<server>_<tool>`
 7. Policy — shell / HTTPS 白名单 / 路径沙箱 / 轮次与字节上限
-8. 具名会话 — `-S ID` 落盘；`--session-list` / `--session-clear`
+8. 具名会话 — 默认 id `default`；`-S ID`；`--session-list` / `--session-clear`
 9. 多会话混合 — `-S a,b` 按序注入，本轮只写回第一个 ID
-10. Daemon 多轮 — `neo daemon` / `--socket`
-11. 本机向量记忆 — 召回、启发式写入、`memory_add`、`memory store|recall`
-12. 终端 Markdown — `-R`（内置 md4c）
-13. Profile / 诊断 — `-p` / `-m` / `-v` / `-d`
-14. Claw 拼装 — soul / bootstrap / rules / memory（[`docs/claw.md`](docs/claw.md)）
-15. JSON5 配置 — 顶层键 `capability_matrix`
-16. 会话角色 — `--role NAME` + 配置 `roles`；同一 `-S` 共享历史；落盘 `[NAME] …`
+10. 新开默认会话 — `-N` / `--session-new` 将 `default` 归档为 `YYYYMMDD-HHMMSS` 后重新聊
+11. Daemon 多轮 — `neo daemon` / `--socket`
+12. 本机向量记忆 — 召回、启发式写入、`memory_add`、`memory store|recall`
+13. 终端 Markdown — 默认开启（md4c）；`--no-render` 输出原文
+14. Profile / 诊断 — `-p` / `-m` / `-v` / `-d`
+15. Claw 拼装 — soul / bootstrap / rules / memory（[`docs/claw.md`](docs/claw.md)）
+16. JSON5 配置 — 顶层键 `capability_matrix`
+17. 会话角色 — `--role NAME` + 配置 `roles`；同一 `-S` 共享历史；落盘 `[NAME] …`
+18. 机读输出 — `-j` / `--json` 为 OpenAI `chat.completion` JSON；`-o FILE` 写回复/JSON（或 plan DAG）
 
 ---
 
@@ -56,35 +58,39 @@ cp config/config.json5.example config/config.json5
 
 ```bash
 ./neo "用三句话说明 Neo Agent 适合做什么"
-./neo -R "同上，终端渲染 Markdown"
+./neo --no-render "同上，输出原始 Markdown"
+./neo "在默认会话里继续"
+./neo -N "新开默认会话（先归档 default）"
 
-./neo -S ship -R "飞船怎么做"
-./neo -S ship -R "展开第 4 种"
-./neo -S ship,cook -R "结合两边继续"
+./neo -S ship "飞船怎么做"
+./neo -S ship "展开第 4 种"
+./neo -S ship,cook "结合两边继续"
 ./neo --session-list
 ./neo --session-clear ship
 
 # 同会话切换角色（须配置 roles）
-./neo -S ship --role researcher -R "先调研飞船"
-./neo -S ship --role writer -R "根据上文写成短文"
+./neo -S ship --role researcher "先调研飞船"
+./neo -S ship --role writer "根据上文写成短文"
 
 ./neo dag run show_time
 ./neo run "查看系统时间"
 ./neo plan "梳理仓库近期工作重点"
 
-./neo memory store "用户偏好深色模式"
-./neo memory recall "深色模式"
-./neo -v "请记住我喜欢大号字体"
+./neo -j "给脚本用的 JSON"
+./neo -o /tmp/reply.txt "只写入文件"
+./neo -j -o /tmp/reply.json "JSON 写入文件"
 ```
 
 常用入口：
 
-1. 问答 — `./neo "…"` / `./neo -R "…"`
-2. 会话 — `./neo -S id` / `-S a,b`
-3. DAG — `./neo dag run <名>` / `./neo run <名|"目标">` / `./neo plan "目标"`
-4. 多轮 — `./neo daemon` / `--socket PATH`
-5. 记忆 — `./neo memory store|recall "…"`
-6. Profile — `./neo -p demo …`
+1. 问答 — `./neo "…"`（默认会话 `default`；默认渲染 Markdown；`--no-render` 出原文）
+2. 新开默认会话 — `./neo -N "…"`（归档 `default` 后再聊）
+3. 具名会话 / 混合 — `./neo -S id` / `-S a,b`
+4. JSON / 文件 — `./neo -j "…"` / `./neo -o FILE "…"` / `./neo -j -o FILE "…"`
+5. DAG — `./neo dag run <名>` / `./neo run <名|"目标">` / `./neo plan "目标"`
+6. 多轮 — `./neo daemon` / `--socket PATH`
+7. 记忆 — `./neo memory store|recall "…"`
+8. Profile — `./neo -p demo …`
 
 更多样例：[`docs/examples.md`](docs/examples.md)。矩阵与 DAG：[`docs/tool.md`](docs/tool.md)、[`docs/dag.md`](docs/dag.md)。
 

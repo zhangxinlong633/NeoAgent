@@ -27,15 +27,17 @@ The execution spine is **DAG ∥ Capability Matrix ∥ Policy**; LLM and Memory 
 5. Capability Matrix — builtins, allow-listed commands, packs under `capabilities/`
 6. MCP (stdio) — `mcp_servers` → `mcp_<server>_<tool>`
 7. Policy — shell / HTTPS allow-list / path sandbox / turn and byte limits
-8. Named sessions — `-S ID` on disk; `--session-list` / `--session-clear`
+8. Named CLI sessions — default id `default`; `-S ID`; `--session-list` / `--session-clear`
 9. Multi-session mix — `-S a,b` loads in order; writes the turn to the **first** ID only
-10. Daemon multi-turn — `neo daemon` / `--socket`
-11. On-host vector memory — recall, heuristic auto-store, `memory_add`, `memory store|recall`
-12. Terminal Markdown — `-R` (vendored md4c)
-13. Profiles / diagnostics — `-p` / `-m` / `-v` / `-d`
-14. Claw prompt blocks — soul / bootstrap / rules / memory ([`docs/claw.md`](docs/claw.md))
-15. JSON5 config — top-level `capability_matrix`
-16. Session roles — `--role NAME` with config `roles`; shared `-S` history; assistant saved as `[NAME] …`
+10. New default session — `-N` / `--session-new` archives `default` → `YYYYMMDD-HHMMSS`, then chats on fresh `default`
+11. Daemon multi-turn — `neo daemon` / `--socket`; in-memory turns, independent of `-S` files
+12. On-host vector memory — recall, heuristic auto-store, `memory_add`, `memory store|recall`
+13. Terminal Markdown — on by default (md4c); `--no-render` for raw text
+14. Profiles / diagnostics — `-p` / `-m` / `-v` / `-d`
+15. Claw prompt blocks — soul / bootstrap / rules / memory ([`docs/claw.md`](docs/claw.md))
+16. JSON5 config — top-level `capability_matrix`
+17. Session roles — `--role NAME` with config `roles`; shared `-S` history; assistant saved as `[NAME] …`
+18. Machine output — `-j` / `--json` OpenAI `chat.completion` JSON; `-o FILE` writes reply/JSON (or plan DAG)
 
 ---
 
@@ -56,35 +58,39 @@ cp config/config.json5.example config/config.json5
 
 ```bash
 ./neo "In three sentences, what is Neo Agent good for?"
-./neo -R "Same, with terminal Markdown"
+./neo --no-render "Same, raw Markdown / plain text"
+./neo "follow-up on the default session"
+./neo -N "start fresh (archives default → YYYYMMDD-HHMMSS)"
 
-./neo -S ship -R "How do I build a spaceship?"
-./neo -S ship -R "Option 4 in detail"
-./neo -S ship,cook -R "Combine both threads"
+./neo -S ship "How do I build a spaceship?"
+./neo -S ship "Option 4 in detail"
+./neo -S ship,cook "Combine both threads"
 ./neo --session-list
 ./neo --session-clear ship
 
 # Same session, switch roles (requires config roles{})
-./neo -S ship --role researcher -R "Research spaceships first"
-./neo -S ship --role writer -R "Turn that into a short article"
+./neo -S ship --role researcher "Research spaceships first"
+./neo -S ship --role writer "Turn that into a short article"
 
 ./neo dag run show_time
 ./neo run "show the system time"
 ./neo plan "summarize recent work in this repo"
 
-./neo memory store "User prefers dark mode"
-./neo memory recall "dark mode"
-./neo -v "Please remember I prefer large fonts"
+./neo -j "reply as JSON for scripts"
+./neo -o /tmp/reply.txt "write reply to file only"
+./neo -j -o /tmp/reply.json "JSON object written to file"
 ```
 
 Common entry points:
 
-1. Chat — `./neo "…"` / `./neo -R "…"`
-2. Sessions — `./neo -S id` / `-S a,b`
-3. DAG — `./neo dag run <name>` / `./neo run <name|"goal">` / `./neo plan "goal"`
-4. Multi-turn — `./neo daemon` / `--socket PATH`
-5. Memory — `./neo memory store|recall "…"`
-6. Profile — `./neo -p demo …`
+1. Chat — `./neo "…"` (uses session `default`; Markdown on; `--no-render` for raw)
+2. New default session — `./neo -N "…"` (archive `default`, then chat)
+3. Named sessions — `./neo -S id` / `-S a,b`
+4. JSON / file — `./neo -j "…"` / `./neo -o FILE "…"` / `./neo -j -o FILE "…"`
+5. DAG — `./neo dag run <name>` / `./neo run <name|"goal">` / `./neo plan "goal"`
+6. Multi-turn — `./neo daemon` / `--socket PATH`
+7. Memory — `./neo memory store|recall "…"`
+8. Profile — `./neo -p demo …`
 
 More examples: [`docs/examples.md`](docs/examples.md). Matrix and DAG: [`docs/tool.md`](docs/tool.md), [`docs/dag.md`](docs/dag.md).
 
