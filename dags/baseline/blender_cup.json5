@@ -1,0 +1,12 @@
+{
+  name: "blender_cup",
+  description: "调用本机 Blender 画一只简单杯子并渲染静帧。",
+  when: ["画杯子", "Blender 杯子演示"],
+  when_not: ["复杂产品建模", "动画成片"],
+  tags: ["blender", "cup", "demo"],
+  requires: ["blender_cup"],
+  outcome: ".neo/blender_cup/cup.png",
+  steps: [
+    { id: "draw", type: "tool", tool: "blender_cup", args: {} },
+  ],
+}

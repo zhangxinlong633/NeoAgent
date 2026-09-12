@@ -6,5 +6,8 @@
 |------|------|------|
 | `show_time.json5` | `show_time` | `date_iso` → 打印 UTC ISO 时间 |
 | `repo_pulse.json5` | `repo_pulse` | `git_status_short` → `git_log_five` → LLM 一段话汇总 |
+| `blender_showcase.json5` | `blender_showcase` | `blender_showcase` → 本机 Blender 渲染展示静帧（需已安装 Blender） |
+| `blender_cup.json5` | `blender_cup` | `blender_cup` → 本机 Blender 画简单杯子并渲染 |
+| `blender_watermelon.json5` | `blender_watermelon` | `blender_watermelon` → 本机 Blender 画西瓜并渲染 |
 
-依赖能力须已在矩阵中（`date_iso` 来自 `capabilities/local/`；git 能力来自 `capabilities/git/`）。本目录无子目录。
+依赖能力须已在矩阵中（`date_iso` 来自 `capabilities/local/`；git 能力来自 `capabilities/git/`；Blender 演示能力来自 `capabilities/local/`，需本机安装 Blender）。本目录无子目录。

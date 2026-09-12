@@ -1,0 +1,23 @@
+{
+  name: "blender_showcase",
+  description: "调用本机 Blender 渲染金属环+玻璃球展示静帧，验证 Neo 驱动专业 3D 软件。",
+  when: [
+    "演示 Neo 控制 Blender",
+    "需要一张本地生成的科技风 3D 静帧",
+  ],
+  when_not: [
+    "交互式建模（请用 Blender MCP）",
+    "长动画或电影级 Cycles 成片",
+  ],
+  tags: ["blender", "3d", "demo"],
+  requires: ["blender_showcase"],
+  outcome: "stdout 含输出路径；.neo/blender_showcase/showcase.png",
+  steps: [
+    {
+      id: "render",
+      type: "tool",
+      tool: "blender_showcase",
+      args: {},
+    },
+  ],
+}

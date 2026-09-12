@@ -1,0 +1,29 @@
+{
+  name: "blender_showcase",
+  description: "用本机 Blender 后台渲染一帧展示图（金属环 + 玻璃球 + 三点光），写出 PNG 与 .blend。",
+  when: [
+    "需要快速验证 Neo 能否驱动 Blender",
+    "需要一张本地生成的 3D 展示静帧（无交互）",
+    "演示产品/科技风静物布光",
+  ],
+  when_not: [
+    "需要交互式建模或持续编辑打开的 Blender 会话（请用 Blender MCP）",
+    "需要电影级 Cycles 长渲染或动画序列（本能力为 EEVEE 单帧）",
+    "本机未安装 Blender",
+  ],
+  tags: ["blender", "3d", "render", "demo"],
+  outcome: "stdout 打印输出路径；默认写出 .neo/blender_showcase/showcase.png 与 showcase.blend",
+  argv: ["./scripts/tools/blender_showcase.sh"],
+  parameters: {
+    type: "object",
+    properties: {
+      out: {
+        type: "string",
+        description: "输出目录相对或绝对路径；默认 .neo/blender_showcase",
+      },
+    },
+  },
+  timeout_sec: 180,
+  max_output_bytes: 16384,
+  pass_args: "stdin_json",
+}

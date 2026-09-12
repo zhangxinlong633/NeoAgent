@@ -9,5 +9,8 @@
 | `pwd_print.json5` | `pwd_print` | 沙箱 cwd（`capability_matrix.root`） |
 | `weather_wttr.json5` | `weather_wttr` | 经 `scripts/tools/weather-wttr.sh` 查询 wttr.in 短天气行 |
 | `train_query.json5` | `train_query` | 经 `scripts/tools/train_query.sh` 查询 12306 指定日期两站间 G/D/C 车次摘要 |
+| `blender_showcase.json5` | `blender_showcase` | 本机 Blender 后台渲染展示静帧（金属环+玻璃球）；脚本见同目录 `blender_showcase.py` |
+| `blender_cup.json5` | `blender_cup` | 本机 Blender 画简单陶瓷杯并渲染；脚本见 `blender_cup.py` |
+| `blender_watermelon.json5` | `blender_watermelon` | 本机 Blender 画西瓜并渲染；脚本见 `blender_watermelon.py` |
 
 本目录无子目录。选型元数据见 [`AGENTS.md`](../../AGENTS.md) §4.1。

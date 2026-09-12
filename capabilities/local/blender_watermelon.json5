@@ -1,0 +1,25 @@
+{
+  name: "blender_watermelon",
+  description: "用本机 Blender 后台生成一只西瓜并渲染 PNG（椭球瓜身 + 条纹材质 + 藤蔓叶子）。",
+  when: [
+    "让 Blender / Neo 画一个西瓜",
+    "需要一只西瓜的 3D 静帧演示",
+  ],
+  when_not: [
+    "高精度产品级建模",
+    "交互式编辑已打开的 Blender 工程（请用 MCP）",
+    "本机未安装 Blender",
+  ],
+  tags: ["blender", "3d", "watermelon", "demo"],
+  outcome: "写出 .neo/blender_watermelon/watermelon.png 与 watermelon.blend；stdout 打印路径",
+  argv: ["./scripts/tools/blender_watermelon.sh"],
+  parameters: {
+    type: "object",
+    properties: {
+      out: { type: "string", description: "输出目录，默认 .neo/blender_watermelon" },
+    },
+  },
+  timeout_sec: 180,
+  max_output_bytes: 16384,
+  pass_args: "stdin_json",
+}

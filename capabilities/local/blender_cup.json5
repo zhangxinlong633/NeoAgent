@@ -1,0 +1,24 @@
+{
+  name: "blender_cup",
+  description: "用本机 Blender 后台生成一只简单陶瓷杯并渲染 PNG（杯身布尔挖空 + 把手）。",
+  when: [
+    "让 Blender / Neo 画一个杯子",
+    "需要一只简单杯子的 3D 静帧演示",
+  ],
+  when_not: [
+    "高精度产品级建模或复杂花纹贴图",
+    "交互式编辑已打开的 Blender 工程（请用 MCP）",
+  ],
+  tags: ["blender", "3d", "cup", "demo"],
+  outcome: "写出 .neo/blender_cup/cup.png 与 cup.blend；stdout 打印路径",
+  argv: ["./scripts/tools/blender_cup.sh"],
+  parameters: {
+    type: "object",
+    properties: {
+      out: { type: "string", description: "输出目录，默认 .neo/blender_cup" },
+    },
+  },
+  timeout_sec: 180,
+  max_output_bytes: 16384,
+  pass_args: "stdin_json",
+}
