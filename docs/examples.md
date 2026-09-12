@@ -152,10 +152,12 @@ neo tool: read_file
 ```bash
 ./neo -S demo -R "飞船怎么做"
 ./neo -S demo -R "展开第 4 种：真正的载人/货运飞船"
+./neo -S demo,other -R "结合两个会话继续"
+./neo --session-list
 ./neo --session-clear demo
 ```
 
-`-S` / `--session ID` 将 user/assistant 轮次写入 `.neo/sessions/<ID>.json`（id 仅 `[A-Za-z0-9_-]`），下次同 ID 注入历史。轮数上限为 `session.max_turns`（默认 10）。与 `neo daemon` 内存会话独立。
+`-S` / `--session ID[,ID...]` 按序加载多个会话历史并注入本次请求；**本轮只写回第一个 ID**（`.neo/sessions/<ID>.json`）。id 仅 `[A-Za-z0-9_-]`，最多 8 个、不可重复。`--session-list` 列出已有会话；`--session-clear` 仅清除单个 id。轮数上限为 `session.max_turns`（默认 10）。与 `neo daemon` 内存会话独立。
 
 ### 3.6 终端 Markdown 与提示词评测
 
