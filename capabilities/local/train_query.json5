@@ -1,0 +1,38 @@
+{
+  name: "train_query",
+  description: "Query China Railway (12306) high-speed / EMU train services (G/D/C) between two stations on a given date and print a short list of train numbers with departure/arrival times.",
+  when: [
+    "User asks for 高铁 / 动车 / 车次 / train times between two Chinese cities on a date",
+    "Need live timetable data rather than model guesswork",
+  ],
+  when_not: [
+    "Booking, seat purchase, or payment (this only reads timetable/availability)",
+    "Non-China rail systems",
+    "Historical or long-range planning beyond the queried date",
+  ],
+  tags: ["travel", "rail", "china", "http"],
+  outcome: "Header line plus up to 20 rows like: G102 06:20->10:48 04:28",
+  requires: [],
+  argv: ["./scripts/tools/train_query.sh"],
+  timeout_sec: 40,
+  max_output_bytes: 4096,
+  pass_args: "env",
+  parameters: {
+    type: "object",
+    properties: {
+      from: {
+        type: "string",
+        description: "Departure station or city name, e.g. 南京 or Nanjing",
+      },
+      to: {
+        type: "string",
+        description: "Arrival station or city name, e.g. 北京 or Beijing",
+      },
+      date: {
+        type: "string",
+        description: "Travel date in YYYY-MM-DD",
+      },
+    },
+    required: ["from", "to", "date"],
+  },
+}
