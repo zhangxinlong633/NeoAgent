@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" width="1100" height="560" role="img" aria-labelledby="title desc">
+  <title id="title">Neo agent closed-loop architecture</title>
+  <desc id="desc">The LLM decides and produces or selects a DAG; the DAG schedules tools from the Capability Matrix; Memory auto-stores and deliberately stores valuable information and feeds decisions—closing the loop toward the business goal.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#4A5A68"/>
+    </marker>
+    <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#B07A3A"/>
+    </marker>
+    <filter id="s" x="-3%" y="-3%" width="106%" height="110%">
+      <feDropShadow dx="0" dy="1.2" stdDeviation="1.4" flood-color="#15202B" flood-opacity="0.09"/>
+    </filter>
+    <style>
+      .f { font-family: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; }
+      .h { font-size: 14px; font-weight: 650; fill: #15202B; }
+      .p { font-size: 11.5px; font-weight: 500; fill: #5A6A78; }
+      .c { font-size: 11px; font-weight: 600; fill: #3E4E5C; letter-spacing: 0.03em; }
+      .w { fill: #FFFFFF; }
+      .hint { font-size: 11px; fill: #667788; }
+    </style>
+  </defs>
+
+  <rect width="1100" height="560" rx="14" fill="#EEF2F5"/>
+  <rect x="18" y="18" width="1064" height="524" rx="12" fill="#F7F9FB" stroke="#D9E1EA"/>
+
+  <g filter="url(#s)">
+    <rect x="40" y="210" width="120" height="88" rx="10" fill="#1F6F8B"/>
+    <text class="f w" x="100" y="246" text-anchor="middle" font-size="14" font-weight="650">Business goal</text>
+    <text class="f" x="100" y="268" text-anchor="middle" fill="#D5EAF2" font-size="11.5">What must get done</text>
+  </g>
+
+  <g filter="url(#s)">
+    <rect x="210" y="190" width="168" height="128" rx="10" fill="#15202B"/>
+    <text class="f w" x="294" y="228" text-anchor="middle" font-size="14" font-weight="650">Decision brain</text>
+    <text class="f" x="294" y="250" text-anchor="middle" fill="#AEB8C2" font-size="12">LLM</text>
+    <text class="f" x="294" y="274" text-anchor="middle" fill="#8E9CAA" font-size="11">Understand · plan steps</text>
+    <text class="f" x="294" y="294" text-anchor="middle" fill="#8E9CAA" font-size="11">Generate or select a DAG</text>
+  </g>
+
+  <g filter="url(#s)">
+    <rect x="430" y="120" width="176" height="100" rx="10" fill="#FFFFFF" stroke="#2F6F7E" stroke-width="1.5"/>
+    <text class="f h" x="518" y="158" text-anchor="middle">Scheduler</text>
+    <text class="f p" x="518" y="180" text-anchor="middle">DAG</text>
+    <text class="f p" x="518" y="200" text-anchor="middle">Advance by graph · reviewable</text>
+  </g>
+
+  <g filter="url(#s)">
+    <rect x="430" y="260" width="176" height="100" rx="10" fill="#FFFFFF" stroke="#2F6F7E" stroke-width="1.5"/>
+    <text class="f h" x="518" y="298" text-anchor="middle">Arsenal</text>
+    <text class="f p" x="518" y="320" text-anchor="middle">Capability Matrix</text>
+    <text class="f p" x="518" y="340" text-anchor="middle">Governed tools and skills</text>
+  </g>
+
+  <g filter="url(#s)">
+    <rect x="640" y="200" width="120" height="88" rx="10" fill="#FFFFFF" stroke="#C5D0DB"/>
+    <text class="f h" x="700" y="236" text-anchor="middle">Guardrails</text>
+    <text class="f p" x="700" y="258" text-anchor="middle">Policy</text>
+  </g>
+
+  <g filter="url(#s)">
+    <rect x="810" y="190" width="150" height="128" rx="10" fill="#FFFFFF" stroke="#C5D0DB"/>
+    <text class="f h" x="885" y="232" text-anchor="middle">Outcome</text>
+    <text class="f p" x="885" y="254" text-anchor="middle">DAG × Matrix</text>
+    <text class="f p" x="885" y="276" text-anchor="middle">Get one job done</text>
+    <text class="f p" x="885" y="298" text-anchor="middle">Reviewable result</text>
+  </g>
+
+  <g filter="url(#s)">
+    <rect x="210" y="420" width="750" height="92" rx="10" fill="#FFF8F0" stroke="#E0C19A" stroke-width="1.4"/>
+    <text class="f h" x="585" y="454" text-anchor="middle">Autonomous memory · Memory (retention in the loop)</text>
+    <text class="f p" x="585" y="478" text-anchor="middle">Auto-store valuable cues · deliberate / quantitative writes · recall feeds the brain</text>
+  </g>
+
+  <text class="f c" x="518" y="248" text-anchor="middle">Combined execution</text>
+
+  <path d="M160 254 H210" stroke="#4A5A68" stroke-width="1.7" fill="none" marker-end="url(#a)"/>
+  <path d="M378 230 C400 230 410 170 430 170" stroke="#4A5A68" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+  <path d="M378 278 C400 278 410 310 430 310" stroke="#4A5A68" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+  <path d="M606 170 H620 244 H640" stroke="#4A5A68" stroke-width="1.5" fill="none" marker-end="url(#a)"/>
+  <path d="M606 310 H620 244" stroke="#4A5A68" stroke-width="1.5" fill="none"/>
+  <path d="M760 244 H810" stroke="#4A5A68" stroke-width="1.7" fill="none" marker-end="url(#a)"/>
+  <path d="M518 220 V260" stroke="#2F6F7E" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+
+  <path d="M294 318 V420" stroke="#B07A3A" stroke-width="1.5" stroke-dasharray="5 4" fill="none" marker-end="url(#am)"/>
+  <path d="M518 360 V420" stroke="#B07A3A" stroke-width="1.4" stroke-dasharray="5 4" fill="none" marker-end="url(#am)"/>
+  <path d="M885 318 V420" stroke="#B07A3A" stroke-width="1.4" stroke-dasharray="5 4" fill="none" marker-end="url(#am)"/>
+  <path d="M210 466 H100 254" stroke="#B07A3A" stroke-width="1.4" stroke-dasharray="5 4" fill="none" marker-end="url(#am)"/>
+  <text class="f" x="148" y="450" text-anchor="middle" fill="#B07A3A" font-size="10.5">Recall</text>
+
+  <text class="f hint" x="40" y="48">Closed loop: decide ? schedule ? invoke arsenal ? retain memory ? decide again, until the business goal is met</text>
+  <text class="f hint" x="40" y="536">LLM produces/selects the DAG · DAG schedules · Capability Matrix supplies tools · Memory auto- and deliberately stores valuable information</text>
+</svg>

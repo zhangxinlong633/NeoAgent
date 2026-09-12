@@ -1,99 +1,101 @@
 # Neo
 
-**A goal-oriented, flexible agent system.**
-
-Give Neo a concrete goal (check status, organize materials, run a fixed ops flow…), and it carries the work through as agreed. It is not built to “chat about anything”; it is built to **get a defined class of work done solidly**.
-
-Two pillars drive that:
-
-| Pillar | Business meaning | What it governs |
-|--------|------------------|-----------------|
-| **DAG (flow blueprint)** | How work advances step by step, and how data/results hand off | **Scheduling**: what runs first, what next, which steps depend on which |
-| **Capability matrix** | The allow-list of “moves” (read files, whitelisted commands, external APIs, …) | **Invocation**: which capability a step may actually call |
-
-Add policy (what is forbidden by default), and you get operating discipline: the LLM understands and generates; Neo **schedules by the graph and invokes only from the matrix**.
-
-Copy it to another machine, adjust config, and use it—a portable **Swiss Army knife**, not a heavyweight studio.
-
-Full scenarios and positioning: [`docs/applications.md`](docs/applications.md). Hands-on commands: below and [`docs/examples.md`](docs/examples.md).
+**A portable, goal-oriented agent runtime.**
 
 [中文版 README](README_zh.md)
 
----
+Neo accepts concrete goals (status checks, material organization, fixed operational flows) and executes them under explicit constraints. It is not positioned as an open-ended chatbot; it is built to **complete a defined class of work reliably**.
 
-## Where the business can extend
+### Runtime architecture
 
-Neo’s value is not “which model is smarter,” but whether a **goal-oriented agent can schedule stably, invoke from an allow-list, and keep cost and boundaries under control**. The layers below match [`docs/applications.md`](docs/applications.md): ship what works today first; treat the later layers as direction and vision (not fully delivered yet).
+Neo runs as a closed-loop agent system: the **LLM is the decision brain** (understands the goal and generates or selects a DAG); the **DAG is the scheduler** (advances by graph, reviewable); the **Capability Matrix is the arsenal** (governed tools). Together they finish one job. **Memory** runs through the loop—auto-storing and deliberately storing valuable information, then recalling it to feed later decisions—until the business goal is met.
 
-### Ship today: make agent tasks actually finish
+<p align="center">
+  <img src="docs/neo-architecture-en.svg" alt="Neo agent closed loop: LLM decision brain, DAG scheduler, Capability Matrix arsenal, autonomous Memory" width="100%" />
+</p>
 
-For the common “hard to land” problems of individuals, small teams, and ops:
+| Dimension | Component | Business meaning |
+|-----------|-----------|------------------|
+| Decide | **LLM** | Decision brain: plan steps; generate or select a flow |
+| Schedule | **DAG** | Scheduler: advance by agreed topology |
+| Act | **Capability Matrix** | Arsenal: allow-listed tools and skills |
+| Bound | **Policy** | Guardrails: denials and resource limits |
+| Retain | **Memory** | Autonomous memory: auto-store + deliberate writes; recall feeds decisions |
 
-| Business need | How Neo holds it up |
-|---------------|---------------------|
-| **Multi-step goals must complete and be reviewable** | Encode “fetch → tidy → decide → notify/persist” as a repeatable DAG; the same goal follows a clear path every run |
-| **Lots of internal skills—usable by agents, but governed** | Register scripts, commands, APIs as atomic capabilities in the matrix; tasks may call only listed capabilities |
-| **Don’t send everything to the cloud: costly, slow, and data-sensitive** | Prefer local capabilities for simple steps; call the LLM for hard reasoning; keep sensitive ops inside the trust boundary when policy allows |
+The product triad **DAG ∥ Capability Matrix ∥ Policy** remains the execution spine; LLM and Memory supply decision and cross-session retention that close the loop. Deployment stays light: adjust configuration per environment.
 
-Typical picture: repo/doc sidekick, fire-and-forget goals on a schedule, SOP-style daily checks—**this layer is what the repo delivers today**.
-
-### Next: field and edge (direction)
-
-When “near the data, low latency, and closed loops under weak networks” become hard requirements, the same **DAG + capability matrix** can extend on-site (full form is on the architecture roadmap; today this is mostly reserved contracts):
-
-| Direction | Business picture | Neo’s role |
-|-----------|------------------|------------|
-| **Industrial edge** | Inspection, interlocking, anomaly handling must close on the line | Schedule on industrial hosts; run registered capabilities on nodes; finish critical paths even when the network is unstable |
-| **Embodied / mobile platforms** | Patrol, service robots, onboard task orchestration | Task-level scheduling and capability governance (not a replacement for hard real-time motion control) |
-| **Building / plant linkage** | Sensor-triggered cross-device actions need short paths | Regional scheduling by graph; reduce “everything via the public cloud” inside policy |
-
-### Further: intelligent infrastructure (vision)
-
-As the architecture matures, the product may grow from “an assistant” into “a layer of infrastructure” (**not a current feature list**):
-
-- Extend devices with **capability packs**, not only traditional apps  
-- A **private digital assistant** on a home or org gateway: mail, docs, browser capabilities scheduled by graph; sensitive data stays in the trust domain by default  
-- Cross-system capability distribution and reuse—a governable capability ecosystem  
-
-### Ecological niche (one line)
-
-Cloud LLMs supply deep cognition; **Neo is the scheduling and execution spine that plugs intelligence into real systems**—not a substitute for the brain, but a way to make goals orchestrable, capabilities governable, and boundaries enforceable. Detail and maturity: [`docs/applications.md`](docs/applications.md) §§5–6.
+Scenarios and positioning: [`docs/applications.md`](docs/applications.md). Commands: below and [`docs/examples.md`](docs/examples.md).
 
 ---
 
-## Who it is for
+## Business extension layers
 
-- Individuals or small teams that need **goal-oriented** agent work (not just chat)  
-- Business / ops that want the **same class of goals** to run controllably and reviewably  
-- Anyone who wants light deploy: change config per environment—no heavy platform first  
+Neo’s value is not “which model is smarter,” but whether a goal-oriented agent can **schedule stably, invoke from an allow-list, and control cost and data boundaries**. Layers below align with [`docs/applications.md`](docs/applications.md): deliver what works today first; treat later layers as direction and vision (not fully shipped).
 
-If you want “the strongest coding IDE” or “a huge workflow middle platform,” that is not Neo’s direction—we deliberately stay flexible, landable, and sharp-edged on boundaries.
+### Delivered today: finish tasks, keep them reviewable
+
+| Need | How Neo addresses it |
+|------|----------------------|
+| Multi-step goals must complete with a clear path | Encode fetch → tidy → decide → notify/persist as a repeatable DAG |
+| Internal skills must be usable by agents and governed | Register scripts, commands, and APIs in the matrix; tasks may call only listed capabilities |
+| Reduce cost, latency, and exposure from “everything via the cloud” | Prefer local capabilities for simple steps; call the LLM for hard reasoning |
+| **Retain preferences and facts across sessions (autonomous memory)** | Local vector memory: heuristic auto-store during chat, on-demand recall, and model-driven `memory_add`; data stays on-host by default |
+
+Typical uses: repo/doc sidekick, scheduled goals, SOP-style checks, and lightweight assistants that must **remember user preferences across turns**.
+
+### Direction: field and edge
+
+When near-data, low-latency, weak-network loops become hard requirements, the same DAG + capability matrix can extend on-site (full form is on the architecture roadmap; today mostly reserved contracts).
+
+| Direction | Picture | Neo’s role |
+|-----------|---------|------------|
+| Industrial edge | Inspection, interlocking, anomaly handling close on the line | Schedule on industrial hosts; run registered capabilities on nodes |
+| Embodied / mobile | Patrol, service robots, onboard orchestration | Task-level scheduling and capability governance (not hard real-time motion control) |
+| Building / plant linkage | Sensor-triggered short-path actions | Regional graph scheduling; less “everything via the public cloud” |
+
+### Vision: intelligent infrastructure
+
+As the architecture matures, the product may grow from “an assistant” into “a layer of infrastructure” (**not a current feature list**): capability packs, private digital assistants on gateways, and governable cross-system capability distribution.
+
+### Ecological niche
+
+Cloud LLMs supply deep cognition; **Neo is the scheduling and execution spine that plugs intelligence into real systems**—goals orchestrable, capabilities governable, boundaries enforceable, and memory retainable locally. Detail: [`docs/applications.md`](docs/applications.md) §§5–6.
 
 ---
 
-## What you can do now
+## Audience
 
-Matching “ship today” above, on a local machine you can already:
+- Individuals or small teams that need **goal-oriented** agent work  
+- Operations that want the same class of goals to run controllably and reviewably  
+- Users who prefer light deploy: change configuration per environment  
+- Scenarios that need **on-host autonomous memory** (cross-session preferences/facts without an external embedding service)  
 
-1. **State a goal and get it done**: natural language in; plan then execute (or plan only).  
-2. **Run a fixed DAG**: encode common goals as flows; one command schedules by the graph.  
-3. **Invoke via the capability matrix**: read files, search the repo, run registered commands within policy.  
-4. **Fit daily rhythm**: terminal, long-running listener, cron / pipes—one agent, many entry points.
+If the goal is “the strongest coding IDE” or a heavyweight workflow middle platform, that is outside Neo’s product direction.
 
 ---
 
-## Five-minute start
+## Capability overview
 
-1. A Mac or Linux box with network access (to call your chosen LLM API).  
-2. In this repo: `make` (builds the `neo` binary).  
-3. Copy config and fill in endpoint + key:
+1. **Goal intake and execution**: natural language in; plan then run, or plan only.  
+2. **Declarative DAG scheduling**: encode common goals as graphs; run with one command.  
+3. **Capability-matrix invocation**: file I/O, search, and allow-listed commands within policy.  
+4. **Multiple entry points**: interactive CLI, daemon, cron, and pipes.  
+5. **Autonomous local memory**: store, recall, heuristic auto-store, and `memory_add`; no external embedding API.  
+
+---
+
+## Quick start
+
+1. macOS or Linux with network access (to reach your chosen LLM API).  
+2. From the repository root: `make` (produces the `neo` binary).  
+3. Copy and edit configuration:
 
 ```bash
 cp config/config.json5.example config/config.json5
-# Edit the file: set api_key and model name
+# Set api_key and model name; enable memory.vector for autonomous memory (see below)
 ```
 
-4. Try:
+4. Verify:
 
 ```bash
 ./neo "Who are you?"
@@ -101,55 +103,93 @@ cp config/config.json5.example config/config.json5
 
 ---
 
-## A few commands to learn by doing
+## Common commands
 
-From the repo root (after API key is set):
+From the repository root (valid API credentials required):
 
 ```bash
-# What kinds of goal-oriented work Neo is good for
+# Product positioning
 ./neo "In three sentences, what goal-oriented tasks is Neo good for?"
 
-# Run a catalog DAG: show current time
+# Run catalog DAGs
 ./neo dag run show_time
-
-# Flagship workspace SOP: list → brief → append WORKSPACE_BRIEF.md
 ./neo dag run workspace_brief
 
-# One-line goal: plan and execute
+# Natural-language goal: plan+execute / plan only
 ./neo run "show the system time"
+./neo plan "summarize recent work in this repository"
 
-# Use the read-file capability, then summarize product value
+# Read via the capability matrix, then summarize
 ./neo "Read README.md and summarize the product value in three English sentences."
 
-# Plan only (DAG draft), do not execute yet
-./neo plan "figure out what this repo has been busy with lately"
+# —— Autonomous memory (requires memory.vector.enabled) ——
+./neo memory store "User prefers dark mode"
+./neo memory recall "dark mode"
+./neo -v "Please remember I prefer large fonts"   # auto-store when enabled
 ```
 
-More examples: [`docs/examples.md`](docs/examples.md).
+Further examples: [`docs/examples.md`](docs/examples.md). Memory and claw assembly: [`docs/claw.md`](docs/claw.md).
 
 ---
 
-## Everyday usage (three modes)
+## Usage summary
 
-| You want… | Say |
-|-----------|-----|
-| A quick question | `./neo "your question"` |
-| Finish a goal via a fixed DAG | `./neo dag run <dag-name>` (or `./neo run <dag-name>`) |
-| State a goal in one line and finish it | `./neo run "the goal"` |
-
-Plan without executing: use `plan` instead of `run`.
+| Intent | Command |
+|--------|---------|
+| Single question | `./neo "question"` |
+| Run a named DAG | `./neo dag run <name>` or `./neo run <name>` |
+| Natural-language goal (plan and execute) | `./neo run "goal"` |
+| Plan only | `./neo plan "goal"` |
+| Memory write / recall (no LLM) | `./neo memory store "…"` / `./neo memory recall "…"` |
 
 ---
 
-## Learn more
+## Autonomous memory
 
-| Topic | Doc |
-|-------|-----|
-| Scenarios & positioning (full) | [`docs/applications.md`](docs/applications.md) |
-| Hands-on examples | [`docs/examples.md`](docs/examples.md) |
+Neo provides **on-host autonomous memory**: preferences and facts persist across sessions, retrieval augments the prompt, and **no external embedding service is required**. When enabled, Neo can detect remember/prefer-style user intents and write them locally; the model may also call `memory_add` from the capability matrix.
+
+### Configuration
+
+```json5
+memory: {
+  path: "MEMORY.md",           // when vector is off: truncated file injection
+  max_chars: 4000,
+  vector: {
+    enabled: true,             // enable local vector memory
+    store: ".neo/memory.vdb",
+    top_k: 5,
+    dims: 64,
+    auto_store: {
+      enabled: true,           // heuristic autonomous write (default false)
+      max_chars: 500,
+    },
+  },
+}
+```
+
+### Behavior
+
+| Mechanism | Description |
+|-----------|-------------|
+| **Recall injection** | With `vector.enabled`, retrieve chunks for the user query into `## Memory`; do not fall back to full `MEMORY.md` |
+| **Heuristic auto-store** | With `auto_store.enabled`, user lines containing remember / prefer / 记住 / 偏好 cues are written to the local DB (`-v` logs `neo memory: auto-store`) |
+| **Model-driven store** | Matrix tool `memory_add` for explicit persistence of durable facts |
+| **CLI operations** | `memory store` / `memory recall` for write and dry-run recall without an LLM call |
+| **Data boundary** | Vectors and text sidecar under `vector.store` (default `.neo/`); not written to `MEMORY.md`; embeddings computed in-process |
+
+Authoritative claw and memory notes: [`docs/claw.md`](docs/claw.md).
+
+---
+
+## Documentation index
+
+| Topic | Document |
+|-------|----------|
+| Scenarios and positioning | [`docs/applications.md`](docs/applications.md) |
+| Worked examples | [`docs/examples.md`](docs/examples.md) |
 | Capability matrix | [`docs/tool.md`](docs/tool.md) |
 | DAG scheduling | [`docs/dag.md`](docs/dag.md) |
-| Identity, rules, memory | [`docs/claw.md`](docs/claw.md) |
+| Identity, rules, and memory | [`docs/claw.md`](docs/claw.md) |
 | Contributing | [`AGENTS.md`](AGENTS.md) |
 | Chinese README | [`README_zh.md`](README_zh.md) |
 
@@ -157,4 +197,4 @@ Plan without executing: use `plan` instead of `run`.
 
 ## For developers
 
-Build / test: `make` / `make test`. Product triad: **DAG ∥ Capability Matrix ∥ Policy**. Conventions: [`AGENTS.md`](AGENTS.md). Architecture: [`docs/architecture.md`](docs/architecture.md).
+Build and test: `make` / `make test`. Product triad: **DAG ∥ Capability Matrix ∥ Policy**. Conventions: [`AGENTS.md`](AGENTS.md). Architecture: [`docs/architecture.md`](docs/architecture.md).
