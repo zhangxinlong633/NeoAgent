@@ -1,0 +1,30 @@
+{
+  name: "trade_bot",
+  description: "运行纸面交易机器人（变体4：均值回归 + 分层风控 + 纸面撮合），读取本地行情 CSV 并输出交易账本 CSV。不连接真实券商、不发起网络请求。",
+  when: [
+    "需要在本地对一段行情做策略回测或纸面撮合",
+    "需要生成交易账本（ledger.csv）用于复盘",
+    "需要演示均值回归 + 回撤熔断的风控逻辑",
+  ],
+  when_not: [
+    "需要真实下单或连接券商/交易所 API（本能力不提供）",
+    "需要实时行情（本能力只读本地 CSV 或内置合成序列）",
+    "需要投资建议或收益承诺",
+  ],
+  tags: ["trading", "backtest", "paper", "risk"],
+  outcome: "打印期末权益/收益率/成交笔数摘要，并写出账本 CSV",
+  argv: ["python3", "capabilities/industry/trade_bot.py"],
+  parameters: {
+    type: "object",
+    properties: {
+      prices: { type: "string", description: "行情 CSV 相对路径（date,close）" },
+      out: { type: "string", description: "账本输出 CSV 相对路径，默认 ledger.csv" },
+      demo: { type: "boolean", description: "使用内置合成行情自检" },
+      lookback: { type: "integer", description: "均线窗口，默认 20" },
+      entry_z: { type: "number", description: "入场偏离阈值，默认 1.5" },
+      exit_z: { type: "number", description: "平仓回归阈值，默认 0.3" },
+      max_drawdown: { type: "number", description: "回撤熔断线，默认 0.15" },
+    },
+  },
+  timeout_sec: 30,
+}

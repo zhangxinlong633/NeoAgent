@@ -1,0 +1,30 @@
+{
+  name: "trade_bot_v29_demo",
+  description: "用内置合成行情跑一遍纸面交易机器人（变体29：布林带 + RSI 双确认 + 凯利分数仓位），产出账本并让 LLM 用大字号摘要结果。",
+  when: [
+    "用户想快速看交易机器人变体29的效果，但没有现成行情文件",
+    "需要一条端到端演示：跑策略 -> 出账本 -> 生成摘要",
+  ],
+  when_not: [
+    "需要真实下单或实时行情",
+    "需要基于用户自有行情回测（改用 trade_bot_v29 能力并传 prices）",
+  ],
+  tags: ["trading", "demo", "llm", "mean-reversion"],
+  requires: ["trade_bot_v29"],
+  outcome: "生成 ledger_v29.csv，并输出一段大字号可读的策略摘要",
+  steps: [
+    {
+      id: "run",
+      type: "tool",
+      tool: "trade_bot_v29",
+      args: { demo: true, out: "ledger_v29.csv" },
+    },
+    {
+      id: "brief",
+      type: "llm",
+      tools: "off",
+      prompt: "根据上一步纸面交易机器人（变体29：布林带 + RSI 双确认均值回归 + 凯利分数仓位）的输出，用【大号字体风格】写一段简短摘要：期末权益、收益率、成交笔数、熔断次数，并提醒这是纸面交易、非真实下单、不构成投资建议。",
+      depends_on: ["run"],
+    },
+  ],
+}
