@@ -4,7 +4,7 @@ Neo 在配置中启用 `capability_matrix` 后，会构建一张 **Capability Ma
 
 当前内置能力：`read_file`、`write_file`、`append_file`、`list_dir`、`stat`、`grep`、`mkdir`；可选 `http_get`（需 `http_fetch_enabled` + `http_allow_hosts`）、`run_command`（需 `shell_enabled`）。
 
-命令行走查样例见 [`examples.md`](examples.md)；能力目录布局见 [`../capabilities/README.md`](../capabilities/README.md)。
+命令行走查样例见 [`manual.md`](manual.md)、[`examples.md`](examples.md)；能力目录布局见 [`../capabilities/README.md`](../capabilities/README.md)。
 
 ---
 

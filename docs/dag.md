@@ -4,7 +4,7 @@
 自然语言 `./neo "..."` 仍可自由对话；`neo dag run`（或 `neo run <已知名>`）走确定性图。
 
 不引入 Temporal / Airflow；引擎就是 `neo` 进程内的小 DAG runner。  
-配置迁移见 [migrate-json.md](migrate-json.md)。命令样例见 [examples.md](examples.md)。
+配置迁移见 [migrate-json.md](migrate-json.md)。使用手册见 [manual.md](manual.md)；命令样例见 [examples.md](examples.md)。
 
 ## 节点类型
 

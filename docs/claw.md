@@ -18,7 +18,7 @@ Neo 的产品选择是 **灵活、可移植**，不是 **能力天花板**：
 
 Neo 把「钉在仓库上的助手」拆成 **配置 + Markdown（claw）+ 能力矩阵 + DAG**：**身份**（bootstrap）、**人格**（soul）、**硬约束与答法**（rules）、**长期笔记**（memory），以及可选的工作区 cwd、**Capability Matrix** 与声明式 workflow。**Skills（`SKILL.md` 扫描）已废弃**，原内容迁入 `rules/`；可发现能力只走矩阵与 DAG catalog。
 
-更细的工具与能力矩阵见 [tool.md](tool.md)；workflow / DAG 见 [workflow.md](workflow.md)；命令样例见 [examples.md](examples.md)；Skills 废弃说明见 [superpowers/specs/2026-09-05-deprecate-skills-design.md](superpowers/specs/2026-09-05-deprecate-skills-design.md)。
+更细的工具与能力矩阵见 [tool.md](tool.md)；DAG 见 [dag.md](dag.md)；使用手册见 [manual.md](manual.md)；命令样例见 [examples.md](examples.md)；Skills 废弃说明见 [superpowers/specs/2026-09-05-deprecate-skills-design.md](superpowers/specs/2026-09-05-deprecate-skills-design.md)。
 
 ---
 

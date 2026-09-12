@@ -1,29 +1,28 @@
 # docs/
 
-面向使用者与协作者的产品文档，以及较长篇幅的设计稿。实现细节以源码与 [`AGENTS.md`](../AGENTS.md) 为准；本目录文档描述**对外行为**与迁移指引。
+面向使用者与协作者的产品文档，以及较长篇幅的设计稿。实现细节以源码与 [`AGENTS.md`](../AGENTS.md) 为准；本目录描述**对外行为**与迁移指引。
 
 ## 建议阅读顺序
 
-1. 仓库根 [`README.md`](../README.md)（英文）/ [`README_zh.md`](../README_zh.md)（中文）— 目标型 Agent、业务层次（与 `applications` 对齐）、上手样例  
-2. [`examples.md`](examples.md) — 可复现命令、**开箱组合**、排错  
-3. [`tool.md`](tool.md) / [`dag.md`](dag.md) — 矩阵与 DAG 细则  
-4. [`architecture.md`](architecture.md) / [`applications.md`](applications.md) — 目标架构与场景全文
+1. 仓库根 [`README.md`](../README.md) / [`README_zh.md`](../README_zh.md) — 产品一句话、架构图、Features、安装
+2. **[`manual.md`](manual.md) — 使用手册（推荐主入口）**
+3. [`../example/usage/`](../example/usage/) — 可复制短命令
+4. [`examples.md`](examples.md) — 开箱组合、长样例、排错表
+5. [`tool.md`](tool.md) / [`dag.md`](dag.md) / [`claw.md`](claw.md) — 子系统细则
+6. [`applications.md`](applications.md) / [`architecture.md`](architecture.md) — 场景与目标架构
 
 ## 主要文档
 
-| 文件 | 内容 |
-|------|------|
-| `examples.md` | 命令行使用样例（对话、矩阵、DAG、plan/run、排错） |
-| `architecture.md` | 智能体目标架构（调度/执行/规划）与本仓库实现对照 |
-| `neo-architecture-*.webp`（README 引用）/ `*.svg`（源稿）/ `*.png`（备用） | 运行时架构图（双路径 + Memory）；GitHub README 用 WebP |
-| `applications.md` | 应用场景、问题域与生态位（基础 / 行业 / 未来） |
-| `tool.md` | Capability Matrix、commands、MCP、能力目录、Unix 白名单 |
-| `dag.md` | DAG、plan/run、workflow 目录 |
-| `claw.md` | soul / bootstrap / rules / memory（skills 已废弃） |
-| `migrate-json.md` | YAML → JSON5 迁移 |
+1. `manual.md` — **使用手册**（安装、CLI、会话、JSON 对接、矩阵、DAG、记忆、排错）
+2. `examples.md` — 命令行样例与开箱组合
+3. `tool.md` — Capability Matrix、commands、MCP、能力目录
+4. `dag.md` — DAG、plan/run、目录包
+5. `claw.md` — soul / bootstrap / rules / memory
+6. `applications.md` — 应用场景与生态位
+7. `architecture.md` — 目标架构与实现对照
+8. `migrate-json.md` — YAML → JSON5 迁移
+9. `neo-architecture-*.webp` / `.svg` / `.png` — 运行时架构图
 
 ## 子目录
 
-| 子目录 | 职责 |
-|--------|------|
-| `superpowers/` | 设计规格与实施计划（非日常用户手册） |
+1. `superpowers/` — 设计规格与实施计划（**不是**日常用户手册）

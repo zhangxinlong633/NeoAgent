@@ -92,7 +92,7 @@ cp config/config.json5.example config/config.json5
 7. 记忆 — `./neo memory store|recall "…"`
 8. Profile — `./neo -p demo …`
 
-更多样例：[`docs/examples.md`](docs/examples.md)。矩阵与 DAG：[`docs/tool.md`](docs/tool.md)、[`docs/dag.md`](docs/dag.md)。
+更多样例：[`docs/manual.md`](docs/manual.md)（使用手册）、[`docs/examples.md`](docs/examples.md)、[`example/usage/`](example/usage/)。矩阵与 DAG：[`docs/tool.md`](docs/tool.md)、[`docs/dag.md`](docs/dag.md)。
 
 ---
 

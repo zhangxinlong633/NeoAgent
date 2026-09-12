@@ -92,7 +92,7 @@ Common entry points:
 7. Memory — `./neo memory store|recall "…"`
 8. Profile — `./neo -p demo …`
 
-More examples: [`docs/examples.md`](docs/examples.md). Matrix and DAG: [`docs/tool.md`](docs/tool.md), [`docs/dag.md`](docs/dag.md).
+More examples: [`docs/manual.md`](docs/manual.md) (user manual), [`docs/examples.md`](docs/examples.md), [`example/usage/`](example/usage/). Matrix and DAG: [`docs/tool.md`](docs/tool.md), [`docs/dag.md`](docs/dag.md).
 
 ---
 

@@ -25,7 +25,7 @@ cp config/config.json5.example config/config.json5
 - Step field `"tools": "off"` is a **workflow LLM step** switch; top-level `capability_matrix` is the Capability Matrix object.
 - `neo plan` / `neo run` emit dags as JSON (valid JSON5 on reload).
 
-Usage walkthrough: [`examples.md`](examples.md).
+Usage walkthrough: [`manual.md`](manual.md), [`examples.md`](examples.md).
 
 
 ## Hard cut: `workflows` → `dags`

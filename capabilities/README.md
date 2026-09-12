@@ -2,7 +2,7 @@
 
 本目录为 **Capability Matrix** 的文件化能力包：一能力对应一个 JSON5 文件。配置 `capability_matrix.directory` 指向本目录后，启动时按 `manifest.json5` 的 `load[]` **逐项**扫描子目录中的 `*.json5` / `*.json`，合并进矩阵。
 
-权威说明：[`docs/tool.md`](../docs/tool.md)、[`docs/examples.md`](../docs/examples.md)（含 **开箱组合**）、[`docs/applications.md`](../docs/applications.md)、[`docs/architecture.md`](../docs/architecture.md)、[`AGENTS.md`](../AGENTS.md) §4、§4.1。
+权威说明：[`docs/tool.md`](../docs/tool.md)、[`docs/manual.md`](../docs/manual.md)、[`docs/examples.md`](../docs/examples.md)（含 **开箱组合**）、[`docs/applications.md`](../docs/applications.md)、[`docs/architecture.md`](../docs/architecture.md)、[`AGENTS.md`](../AGENTS.md) §4、§4.1。
 
 ## 职责边界
 
