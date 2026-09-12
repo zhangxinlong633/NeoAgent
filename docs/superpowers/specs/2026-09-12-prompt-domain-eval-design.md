@@ -3,7 +3,7 @@
 | 属性 | 内容 |
 |------|------|
 | 日期 | 2026-09-12 |
-| 状态 | 已确认待实施 |
+| 状态 | 实施中（`feature/prompt-domain-eval`） |
 | 位置 | `tests/prompts/`（与现有 C 单元测试并列） |
 | 关联 | Capability Matrix、`propose_capability`、Policy；产品定位见 [`docs/applications.md`](../../applications.md) |
 

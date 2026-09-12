@@ -164,4 +164,13 @@ test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TE
 test-cli: neo
 	./tests/cli_capability_matrix.sh
 
-.PHONY: clean test test-cli
+test-prompts-unit:
+	cd tests/prompts/runner && python3 test_score.py && python3 test_judge.py
+
+test-prompts-dry:
+	python3 tests/prompts/runner/run.py --corpus tests/prompts/corpus --dry-run
+
+test-prompts: test-prompts-unit
+	python3 tests/prompts/runner/run.py --corpus tests/prompts/corpus --limit 50 --out tests/prompts/reports
+
+.PHONY: clean test test-cli test-prompts test-prompts-unit test-prompts-dry

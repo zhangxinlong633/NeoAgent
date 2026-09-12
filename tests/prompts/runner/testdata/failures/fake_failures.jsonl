@@ -1,0 +1,2 @@
+{"id":"system-0099","domain":"system","status":"fail","reason":"missing tools: ['unix_uptime']","expect":{"outcome":"succeed","tools":["unix_uptime"]},"stdout":"无法获取"}
+{"id":"network-0099","domain":"network","status":"fail","reason":"missing tools","expect":{"outcome":"propose"},"stdout":"没有天气能力"}

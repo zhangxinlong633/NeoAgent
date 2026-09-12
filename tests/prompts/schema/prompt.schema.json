@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["id", "domain", "prompt", "expect"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "domain": {
+      "type": "string",
+      "enum": ["system", "workspace", "network", "memory", "finance", "medical", "legal", "general"]
+    },
+    "prompt": { "type": "string", "minLength": 1 },
+    "expect": {
+      "type": "object",
+      "required": ["outcome"],
+      "additionalProperties": false,
+      "properties": {
+        "outcome": { "type": "string", "enum": ["succeed", "refuse", "propose"] },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "forbid_tools": { "type": "array", "items": { "type": "string" } },
+        "must_include": { "type": "array", "items": { "type": "string" } },
+        "must_exclude": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "notes": { "type": "string" }
+  }
+}

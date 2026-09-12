@@ -147,15 +147,15 @@ neo tool: read_file
 
 危险命令（如 `unix_rm`）默认不在白名单，调用应失败或不可见。调整见 [`capabilities/unix/README.md`](../capabilities/unix/README.md)。
 
-### 3.5 终端 Markdown 渲染
+领域提示词评测（可选，不进默认 `make test`）：
 
 ```bash
-./neo -R "用表格对比 DAG 与 Capability Matrix 的职责"
+make test-prompts-dry          # 校验 ≥1000 条语料
+make test-prompts-unit         # 规则打分单测
+# make test-prompts            # 另需本机 API：最多 50 条 live
 ```
 
-`-R` / `--render` 用 vendored [MD4C](https://github.com/mity/md4c) 把助手回复渲染到终端（TTY 下带 ANSI）；失败则回退原文。
-
----
+详见 [`tests/prompts/README.md`](../tests/prompts/README.md)。
 
 ## 4. 确定性 DAG：`dag run`
 

@@ -46,3 +46,6 @@ capabilities/proposed/*.json5
 tests/fixtures/cap_pack/proposed/*.json5
 !tests/fixtures/cap_pack/proposed/.gitkeep
 .DS_Store
+
+tests/prompts/reports/
+tests/prompts/gaps/drafts/
