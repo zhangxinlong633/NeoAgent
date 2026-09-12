@@ -21,6 +21,11 @@ typedef struct {
 typedef struct {
   char *path;
   int max_chars;
+  /* vector.*：本地检索增强；默认关闭，行为与仅截断 path 一致 */
+  int vector_enabled;
+  char *vector_store;
+  int vector_top_k;
+  int vector_dims;
 } memory_config_t;
 
 /* OpenClaw-style persona file (injected before bootstrap as ## Soul) */

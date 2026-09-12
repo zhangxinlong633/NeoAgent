@@ -160,6 +160,30 @@ else
   bad "matrix off unexpected success"
 fi
 
+# --- help mentions memory recall ---
+run_capture "$NEO" -h
+if [[ "$RC" -eq 0 ]] && grep -q 'memory recall' <<<"$ERR$OUT" && grep -q 'memory store' <<<"$ERR$OUT"; then
+  ok "help lists memory recall/store"
+else
+  bad "help lists memory recall/store (rc=$RC)"
+fi
+
+# --- memory store + recall (vector DB, no MEMORY.md, no LLM) ---
+rm -f tests/fixtures/.tmp_cli_memory.vdb tests/fixtures/.tmp_cli_memory.vdb.txts
+run_capture "$NEO" -c tests/fixtures/memory_vector.json5 memory store "User prefers dark mode in the editor"
+if [[ "$RC" -eq 0 ]] && grep -q 'neo memory: store ok' <<<"$ERR"; then
+  ok "memory store"
+else
+  bad "memory store (rc=$RC err=$ERR)"
+fi
+run_capture "$NEO" -c tests/fixtures/memory_vector.json5 memory recall "dark mode preference"
+if [[ "$RC" -eq 0 ]] && grep -q 'neo memory: vector' <<<"$ERR" && grep -qi 'dark' <<<"$OUT"; then
+  ok "memory recall after store"
+else
+  bad "memory recall after store (rc=$RC err=$ERR out=$OUT)"
+fi
+rm -f tests/fixtures/.tmp_cli_memory.vdb tests/fixtures/.tmp_cli_memory.vdb.txts
+
 # --- profile path still works (demo_loop uses matrix commands) ---
 if [[ -f config/profiles/demo/neo.json5 ]]; then
   rm -f config/profiles/demo/count.out tests/fixtures/count.out 2>/dev/null || true

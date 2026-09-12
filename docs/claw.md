@@ -63,7 +63,7 @@ Neo 把「钉在仓库上的助手」拆成 **配置 + Markdown（claw）+ 能�
 4. 若配置了 **soul**：`## Soul` + `soul.path` 文件内容（截断到 `max_chars`）
 5. **bootstrap**：每个 `## Bootstrap: <path>` + 内容（`max_chars_per_file`）
 6. 若配置了 **rules**：每个 `## Rules: <path>` + 内容
-7. **memory**：`## Memory` + `memory.path` 内容
+7. **memory**：`## Memory` + `memory.path` 内容（或 `memory.vector` 召回块）
 8. 若启用 `capability_matrix`：工具说明与矩阵 listing（见 [tool.md](tool.md)）
 
 **操作建议**：在仓库根目录执行 `./neo`，并与 `capability_matrix.root: "."` 一起使用，这样 cwd、bootstrap 相对路径与沙箱一致。
@@ -116,7 +116,9 @@ Neo 把「钉在仓库上的助手」拆成 **配置 + Markdown（claw）+ 能�
 ### 3.4 与 bootstrap / memory 的配合
 
 - **bootstrap**：继续用来列 `AGENTS.md` 等「任务与边界」；顺序上在 soul **之后**，因此 AGENTS 可以引用「人格见 Soul 段」这类分工。
-- **memory**：仍是 `memory.path` + `max_chars`；适合放**会随时间变**的笔记，与相对稳定的 soul/rules 区分。
+- **memory**：`memory.path` + `max_chars`；可选 `memory.vector`（本地分块检索，默认关）。适合放**会随时间变**的笔记，与相对稳定的 soul/rules 区分。启用 `vector.enabled` 时按用户问题召回相关块注入 `## Memory`，仍受 `max_chars` 预算约束；embedding 仅本地，不调外部 API。
+- **命令行**：`./neo memory store "笔记"` 写入本地向量库（**不写** `MEMORY.md`）；`./neo memory recall "问题"` 试召回。需 `memory.vector.enabled: true`。stderr 有 `neo memory:` 摘要；日常提问加 `-v` / `-d` 同样可见。
+- **vector 开**：prompt 注入只查库；**vector 关**：仍截断读 `memory.path`。
 
 ---
 
@@ -132,6 +134,8 @@ Neo 把「钉在仓库上的助手」拆成 **配置 + Markdown（claw）+ 能�
 | 多轮 socket | `./neo daemon --socket /tmp/neo.sock`，例如 `echo "问题" \| nc -U /tmp/neo.sock` |
 | 会话长度 | 配置里 `session.max_turns`（daemon 保留的 user+assistant 对数） |
 | 临时关掉工具 | `NEO_DISABLE_TOOLS=1 ./neo "..."`（与 [tool.md](tool.md) 一致） |
+| 试 memory 召回（无 LLM） | `./neo memory recall "query"` |
+| 写入 memory 向量库（无 LLM） | `./neo memory store "note"`（需 `memory.vector.enabled`） |
 | API / 模型环境覆盖 | `NEO_MODEL`、`NEO_API_KEY`；配置路径仍可用 `NEO_CONFIG` |
 
 **调试**：某段 soul/rules 没出现，先确认 `path` 相对 cwd 可读、且没有被 `max_chars` 截成空；再用 `-d` 在 stderr 里搜 `## Soul` / `## Rules`。
@@ -284,7 +288,12 @@ pong
       "rules/response-playbook.md",
     ],
   },
-  memory: { path: "MEMORY.md", max_chars: 4000 },
+  memory: {
+    path: "MEMORY.md",
+    max_chars: 4000,
+    // 可选：本地向量召回（默认关）
+    // vector: { enabled: true, store: ".neo/memory.vdb", top_k: 5, dims: 64 },
+  },
   capability_matrix: {
     enabled: true,
     root: ".",

@@ -2,14 +2,14 @@
 # Build: make
 # Run:   ./neo "your question"
 #
-# Layout: src/{cli,core,llm,capability,dag,vendor}/
+# Layout: src/{cli,core,llm,capability,dag,memory,vendor}/
 # Objects: build/ mirroring src/ (never write .o under src/)
 
 CC      = cc
 OBJDIR  = build
-INCLUDES = -Isrc/core -Isrc/llm -Isrc/capability -Isrc/dag -Isrc/vendor
+INCLUDES = -Isrc/core -Isrc/llm -Isrc/capability -Isrc/dag -Isrc/memory -Isrc/vendor
 CFLAGS  = -O2 -Wall -Wextra $(INCLUDES)
-LDFLAGS =
+LDFLAGS = -lm
 
 SRC = \
 	src/cli/main.c \
@@ -25,6 +25,8 @@ SRC = \
 	src/dag/dag.c \
 	src/dag/dag_dir.c \
 	src/dag/plan.c \
+	src/memory/neo_embed.c \
+	src/memory/neo_memory.c \
 	src/vendor/yyjson.c \
 	src/vendor/BearHttpsClientOne.c
 
@@ -58,7 +60,9 @@ clean:
 		tests/test_dag_runner \
 		tests/test_dag_on_fail \
 		tests/test_plan_extract \
-		tests/test_capability_matrix
+		tests/test_capability_matrix \
+		tests/test_neo_embed \
+		tests/test_neo_memory
 
 # Shared flags for test binaries that compile vendor code from source.
 TEST_CFLAGS = $(CFLAGS) -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare
@@ -119,7 +123,18 @@ $(TEST_CAP_MATRIX): tests/test_capability_matrix.c src/capability/capability_mat
 		src/core/config.c $(TEST_HTTP) src/capability/agent_tools.c src/capability/command_tools.c \
 		src/llm/llm.c $(TEST_VENDOR) $(LDFLAGS)
 
-test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TEST_DAG_TMPL) $(TEST_DAG_DAG) $(TEST_DAG_ON_FAIL) $(TEST_PLAN) $(TEST_CAP_MATRIX) neo
+TEST_NEO_EMBED = tests/test_neo_embed
+$(TEST_NEO_EMBED): tests/test_neo_embed.c src/memory/neo_embed.c src/memory/neo_embed.h
+	$(CC) $(TEST_CFLAGS) -o $@ tests/test_neo_embed.c src/memory/neo_embed.c $(LDFLAGS)
+
+TEST_NEO_MEMORY = tests/test_neo_memory
+$(TEST_NEO_MEMORY): tests/test_neo_memory.c src/memory/neo_memory.c src/memory/neo_embed.c \
+		src/core/config.c src/capability/capability_dir.c src/dag/dag_dir.c $(TEST_VENDOR)
+	$(CC) $(TEST_CFLAGS) -o $@ tests/test_neo_memory.c src/memory/neo_memory.c src/memory/neo_embed.c \
+		src/core/config.c src/capability/capability_dir.c src/dag/dag_dir.c src/vendor/yyjson.c \
+		$(LDFLAGS)
+
+test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TEST_DAG_TMPL) $(TEST_DAG_DAG) $(TEST_DAG_ON_FAIL) $(TEST_PLAN) $(TEST_CAP_MATRIX) $(TEST_NEO_EMBED) $(TEST_NEO_MEMORY) neo
 	./$(TEST_PARSE_CMD)
 	./$(TEST_CMD_EXEC)
 	./$(TEST_PARSE_DAG)
@@ -129,6 +144,8 @@ test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TE
 	./$(TEST_DAG_ON_FAIL)
 	./$(TEST_PLAN)
 	./$(TEST_CAP_MATRIX)
+	./$(TEST_NEO_EMBED)
+	./$(TEST_NEO_MEMORY)
 	./tests/cli_capability_matrix.sh
 
 test-cli: neo

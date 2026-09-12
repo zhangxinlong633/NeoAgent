@@ -1,0 +1,21 @@
+{
+  model: {
+    provider: "openai",
+    base_url: "https://example.invalid/v1",
+    name: "dummy",
+    api_key: "x",
+  },
+  memory: {
+    path: "tests/fixtures/memory_vector_sample.md",
+    max_chars: 2000,
+    vector: {
+      enabled: true,
+      store: "tests/fixtures/.tmp_cli_memory.vdb",
+      top_k: 3,
+      dims: 32,
+    },
+  },
+  capability_matrix: {
+    enabled: false,
+  },
+}

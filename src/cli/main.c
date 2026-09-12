@@ -8,6 +8,7 @@
 #include "config.h"
 #include "daemon.h"
 #include "llm.h"
+#include "neo_memory.h"
 #include "plan.h"
 #include "dag.h"
 #include <limits.h>
@@ -62,12 +63,14 @@ static void print_usage(const char *prog) {
   fprintf(stderr, "       %s [OPTIONS] dag run NAME\n", prog);
   fprintf(stderr, "       %s [OPTIONS] plan [--steps N] [-o FILE] \"task\"\n", prog);
   fprintf(stderr, "       %s [OPTIONS] run NAME|\"task\" [--steps N] [-o FILE]\n", prog);
+  fprintf(stderr, "       %s [OPTIONS] memory recall \"query\"\n", prog);
+  fprintf(stderr, "       %s [OPTIONS] memory store \"note\"\n", prog);
   fprintf(stderr, "Options:\n");
   fprintf(stderr, "  -c, --config PATH   Config file (default: config/config.json5)\n");
   fprintf(stderr, "  -p, --profile NAME  Use config/profiles/NAME/ (fallback: profiles/NAME/)\n");
   fprintf(stderr, "  -m, --model NAME    Override model name\n");
   fprintf(stderr, "  -d, --debug         Print system prompt, user message and request params to stderr\n");
-  fprintf(stderr, "  -v, --verbose       Workflow step summaries on stderr\n");
+  fprintf(stderr, "  -v, --verbose       Step / capability / memory summaries on stderr\n");
   fprintf(stderr, "  -o, --output FILE   (with plan/run) Save planned dags JSON\n");
   fprintf(stderr, "  --steps N           (with plan/run) Soft target step count (default 10, max 32)\n");
   fprintf(stderr, "  -h, --help          Show this help\n");
@@ -76,6 +79,82 @@ static void print_usage(const char *prog) {
   fprintf(stderr, "  dag run NAME        Run a declarative DAG from config/catalog\n");
   fprintf(stderr, "  plan \"task\"         LLM emits a DAG (validate only; JSON on stdout)\n");
   fprintf(stderr, "  run NAME|\"task\"     Run named DAG, or plan+execute a task\n");
+  fprintf(stderr, "  memory recall Q     Dry-run local memory recall (no LLM); text on stdout\n");
+  fprintf(stderr, "  memory store TEXT   Append note into local vector DB (not MEMORY.md)\n");
+}
+
+/* stderr 一行说明本轮 Memory 注入方式（-v / -d / memory 子命令）。 */
+static void neo_memory_log(const agent_config_t *conf, const char *recalled) {
+  size_t n;
+  if (!conf) return;
+  n = recalled ? strlen(recalled) : 0;
+  if (conf->memory.vector_enabled) {
+    fprintf(stderr, "neo memory: vector store=%s chars=%zu top_k=%d dims=%d\n",
+            conf->memory.vector_store && conf->memory.vector_store[0]
+                ? conf->memory.vector_store
+                : ".neo/memory.vdb",
+            n,
+            conf->memory.vector_top_k > 0 ? conf->memory.vector_top_k : 5,
+            conf->memory.vector_dims > 0 ? conf->memory.vector_dims : 64);
+  } else {
+    fprintf(stderr, "neo memory: truncate path=%s chars=%zu max_chars=%d\n",
+            conf->memory.path ? conf->memory.path : "(null)", n,
+            conf->memory.max_chars > 0 ? conf->memory.max_chars : 4000);
+  }
+}
+
+static int cmd_memory_recall(agent_config_t *conf, const char *query) {
+  neo_memory_t *mem;
+  char *out = NULL;
+  if (!conf || !query) return 1;
+  if (!conf->memory.vector_enabled && (!conf->memory.path || !conf->memory.path[0])) {
+    fprintf(stderr, "neo: memory.path not set (and vector disabled)\n");
+    return 1;
+  }
+  mem = neo_memory_open(conf);
+  if (!mem) {
+    fprintf(stderr, "neo: memory open failed\n");
+    return 1;
+  }
+  if (neo_memory_recall(mem, query, &out) != 0 || !out) {
+    fprintf(stderr, "neo: memory recall empty or failed\n");
+    neo_memory_close(mem);
+    return 1;
+  }
+  neo_memory_log(conf, out);
+  fputs(out, stdout);
+  if (out[0] && out[strlen(out) - 1] != '\n') fputc('\n', stdout);
+  free(out);
+  neo_memory_close(mem);
+  return 0;
+}
+
+static int cmd_memory_store(agent_config_t *conf, const char *text) {
+  neo_memory_t *mem;
+  if (!conf || !text || !text[0]) {
+    fprintf(stderr, "neo: memory store requires non-empty text\n");
+    return 1;
+  }
+  if (!conf->memory.vector_enabled) {
+    fprintf(stderr, "neo: memory store requires memory.vector.enabled=true\n");
+    return 1;
+  }
+  mem = neo_memory_open(conf);
+  if (!mem) {
+    fprintf(stderr, "neo: memory open failed\n");
+    return 1;
+  }
+  if (neo_memory_store(mem, text) != 0) {
+    fprintf(stderr, "neo: memory store failed\n");
+    neo_memory_close(mem);
+    return 1;
+  }
+  fprintf(stderr, "neo memory: store ok chunks=%d store=%s\n", neo_memory_count(mem),
+          conf->memory.vector_store && conf->memory.vector_store[0]
+              ? conf->memory.vector_store
+              : ".neo/memory.vdb");
+  neo_memory_close(mem);
+  return 0;
 }
 
 /* Prefer config/ layout; keep repo-root paths as fallback. */
@@ -161,6 +240,8 @@ int main(int argc, char **argv) {
   int verbose = 0;
   int dag_mode = 0;
   const char *dag_name = NULL;
+  int memory_mode = 0; /* 1=recall 2=store */
+  const char *memory_arg = NULL;
   int plan_mode = 0;
   int run_mode = 0;
   int legacy_plan_run = 0;
@@ -240,6 +321,23 @@ int main(int argc, char **argv) {
       arg_start += 3;
       continue;
     }
+    if (strcmp(argv[arg_start], "memory") == 0) {
+      if (arg_start + 2 >= argc) {
+        fprintf(stderr, "neo: usage: memory recall|store \"text\"\n");
+        return 1;
+      }
+      if (strcmp(argv[arg_start + 1], "recall") == 0) {
+        memory_mode = 1;
+      } else if (strcmp(argv[arg_start + 1], "store") == 0) {
+        memory_mode = 2;
+      } else {
+        fprintf(stderr, "neo: usage: memory recall|store \"text\"\n");
+        return 1;
+      }
+      memory_arg = argv[arg_start + 2];
+      arg_start += 3;
+      continue;
+    }
     if (strcmp(argv[arg_start], "workflow") == 0) {
       fprintf(stderr, "neo: 'workflow' was removed; use 'dag run NAME' or 'run NAME'\n");
       return 1;
@@ -299,7 +397,26 @@ int main(int argc, char **argv) {
       conf.model.name = malloc(strlen(model_override) + 1);
       if (conf.model.name) strcpy(conf.model.name, model_override);
     }
-    int r = socket_path ? run_daemon_socket(&conf, socket_path, debug) : run_daemon_stdin(&conf, debug);
+    int r = socket_path ? run_daemon_socket(&conf, socket_path, debug, verbose)
+                        : run_daemon_stdin(&conf, debug, verbose);
+    config_free(&conf);
+    return r != 0;
+  }
+
+  if (memory_mode) {
+    agent_config_t conf;
+    int r;
+    config_init(&conf);
+    if (config_load_file(&conf, config_path) != 0) {
+      fprintf(stderr, "neo: failed to load config from %s\n", config_path);
+      config_free(&conf);
+      return 1;
+    }
+    config_apply_env(&conf);
+    if (memory_mode == 2)
+      r = cmd_memory_store(&conf, memory_arg);
+    else
+      r = cmd_memory_recall(&conf, memory_arg);
     config_free(&conf);
     return r != 0;
   }
@@ -465,9 +582,15 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (conf.memory.path && tmp) {
-    if (read_file_into(tmp, 65536, conf.memory.path, (size_t)conf.memory.max_chars) > 0)
-      append_section(system_prompt, SYSTEM_MAX, "## Memory (context)\n\n", "", tmp);
+  if (conf.memory.path) {
+    neo_memory_t *mem = neo_memory_open(&conf);
+    char *recalled = NULL;
+    if (mem && neo_memory_recall(mem, user_message, &recalled) == 0 && recalled && recalled[0]) {
+      if (verbose || debug) neo_memory_log(&conf, recalled);
+      append_section(system_prompt, SYSTEM_MAX, "## Memory (context)\n\n", "", recalled);
+    }
+    free(recalled);
+    neo_memory_close(mem);
   }
 
   if (conf.tools.enabled && getenv(NEO_DISABLE_TOOLS_GETENV) == NULL) {

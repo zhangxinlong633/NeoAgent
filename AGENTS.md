@@ -24,7 +24,7 @@
 
 ## 2. 源码地图（改哪里）
 
-布局：`src/{cli,core,llm,capability,dag,vendor}/`；编译产物在 **`build/`**（不要往 `src/` 写 `.o`）。
+布局：`src/{cli,core,llm,capability,dag,memory,vendor}/`；编译产物在 **`build/`**（不要往 `src/` 写 `.o`）。
 
 | 模块 | 职责 |
 |------|------|
@@ -41,6 +41,7 @@
 | `src/dag/dag.c` | DAG 执行（`tool` / `llm` / `loop` / `route`） |
 | `src/dag/dag_dir.c` | DAG 目录加载 + catalog 列表 |
 | `src/dag/plan.c` | 规划提示（catalog `use` 优先）、抽出 dags JSON、materialize |
+| `src/memory/neo_memory.c` | 本地向量记忆（分块 / recall；仅此封装 `vdb.h`） |
 | `src/vendor/yyjson.c` | 第三方 amalgamation；少改 |
 
 `#include` 仍用短名（如 `"config.h"`）；Makefile 用多路径 `-I`。

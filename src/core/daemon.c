@@ -5,6 +5,7 @@
 #include "capability_matrix.h"
 #include "config.h"
 #include "llm.h"
+#include "neo_memory.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +46,8 @@ static void append_section(char *dest, size_t cap, const char *title, const char
   strncat(dest, "\n\n", cap - used - 1);
 }
 
-static void build_system_prompt(agent_config_t *conf, const char *user_message, char *out, size_t cap) {
+static void build_system_prompt(agent_config_t *conf, const char *user_message, char *out, size_t cap,
+                                int verbose) {
   char *tmp = malloc(65536);
   if (!tmp) { out[0] = '\0'; return; }
   out[0] = '\0';
@@ -89,8 +91,27 @@ static void build_system_prompt(agent_config_t *conf, const char *user_message, 
       append_section(out, cap, "## Rules: ", conf->rules.paths[i], tmp);
   }
   if (conf->memory.path) {
-    if (read_file_into(tmp, 65536, conf->memory.path, (size_t)conf->memory.max_chars) > 0)
-      append_section(out, cap, "## Memory (context)\n\n", "", tmp);
+    neo_memory_t *mem = neo_memory_open(conf);
+    char *recalled = NULL;
+    if (mem && neo_memory_recall(mem, user_message, &recalled) == 0 && recalled && recalled[0]) {
+      if (verbose) {
+        if (conf->memory.vector_enabled)
+          fprintf(stderr, "neo memory: vector store=%s chars=%zu top_k=%d dims=%d\n",
+                  conf->memory.vector_store && conf->memory.vector_store[0]
+                      ? conf->memory.vector_store
+                      : ".neo/memory.vdb",
+                  strlen(recalled),
+                  conf->memory.vector_top_k > 0 ? conf->memory.vector_top_k : 5,
+                  conf->memory.vector_dims > 0 ? conf->memory.vector_dims : 64);
+        else
+          fprintf(stderr, "neo memory: truncate path=%s chars=%zu max_chars=%d\n",
+                  conf->memory.path, strlen(recalled),
+                  conf->memory.max_chars > 0 ? conf->memory.max_chars : 4000);
+      }
+      append_section(out, cap, "## Memory (context)\n\n", "", recalled);
+    }
+    free(recalled);
+    neo_memory_close(mem);
   }
   if (conf->tools.enabled && getenv("NEO_DISABLE_TOOLS") == NULL) {
     capability_matrix_t mx;
@@ -210,7 +231,7 @@ static void daemon_debug_print(agent_config_t *conf, const char *system_prompt, 
           bd, gr, strlen(user_message), re, gr, user_message, re, bd, gr, re);
 }
 
-int run_daemon_stdin(agent_config_t *conf, int debug) {
+int run_daemon_stdin(agent_config_t *conf, int debug, int verbose) {
   char *system_prompt = malloc(SYSTEM_MAX);
   char *line_buf = malloc(LINE_MAX);
   if (!system_prompt || !line_buf) {
@@ -225,7 +246,7 @@ int run_daemon_stdin(agent_config_t *conf, int debug) {
     while (len > 0 && (line_buf[len - 1] == '\n' || line_buf[len - 1] == '\r')) line_buf[--len] = '\0';
     if (len == 0) continue;
     if (strcmp(line_buf, "exit") == 0 || strcmp(line_buf, "quit") == 0) break;
-    build_system_prompt(conf, line_buf, system_prompt, SYSTEM_MAX);
+    build_system_prompt(conf, line_buf, system_prompt, SYSTEM_MAX, verbose || debug);
     if (debug) daemon_debug_print(conf, system_prompt, line_buf);
     llm_response_t resp = {0};
     if (do_one_turn(conf, system_prompt, line_buf, &resp) != 0) {
@@ -249,7 +270,7 @@ int run_daemon_stdin(agent_config_t *conf, int debug) {
 }
 
 #ifdef HAVE_UNIX_SOCKET
-int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug) {
+int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, int verbose) {
   int fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (fd < 0) {
     perror("socket");
@@ -294,7 +315,7 @@ int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug) 
     }
     line_buf[n] = '\0';
     if (n > 0) {
-      build_system_prompt(conf, line_buf, system_prompt, SYSTEM_MAX);
+      build_system_prompt(conf, line_buf, system_prompt, SYSTEM_MAX, verbose || debug);
       if (debug) daemon_debug_print(conf, system_prompt, line_buf);
       llm_response_t resp = {0};
       if (do_one_turn(conf, system_prompt, line_buf, &resp) == 0 && resp.data && resp.size) {
@@ -314,10 +335,11 @@ int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug) 
   return 0;
 }
 #else
-int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug) {
+int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, int verbose) {
   (void)conf;
   (void)socket_path;
   (void)debug;
+  (void)verbose;
   fprintf(stderr, "neo: Unix socket not supported on this platform\n");
   return -1;
 }

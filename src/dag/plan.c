@@ -489,6 +489,18 @@ int plan_materialize_config(const agent_config_t *base, const char *dags_json,
                          mut_str(mdoc, base->memory.path ? base->memory.path : "MEMORY.md"));
   yyjson_mut_obj_add_int(mdoc, mem, "max_chars",
                          base->memory.max_chars > 0 ? base->memory.max_chars : 4000);
+  if (base->memory.vector_enabled) {
+    yyjson_mut_val *vec = yyjson_mut_obj(mdoc);
+    yyjson_mut_obj_add_val(mdoc, mem, "vector", vec);
+    yyjson_mut_obj_add_bool(mdoc, vec, "enabled", 1);
+    yyjson_mut_obj_add_val(
+        mdoc, vec, "store",
+        mut_str(mdoc, base->memory.vector_store ? base->memory.vector_store : ".neo/memory.vdb"));
+    yyjson_mut_obj_add_int(mdoc, vec, "top_k",
+                           base->memory.vector_top_k > 0 ? base->memory.vector_top_k : 5);
+    yyjson_mut_obj_add_int(mdoc, vec, "dims",
+                           base->memory.vector_dims > 0 ? base->memory.vector_dims : 64);
+  }
 
   sess = yyjson_mut_obj(mdoc);
   yyjson_mut_obj_add_val(mdoc, root, "session", sess);

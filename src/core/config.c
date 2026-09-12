@@ -311,6 +311,9 @@ void config_init(agent_config_t *c) {
   memset(c, 0, sizeof(*c));
   c->soul.max_chars = 8000;
   c->rules.max_chars_per_file = 8000;
+  c->memory.max_chars = 4000;
+  c->memory.vector_top_k = 5;
+  c->memory.vector_dims = 64;
   c->tools.max_rounds = 16;
   c->tools.max_read_bytes = 262144;
   c->tools.list_dir_max_entries = 256;
@@ -337,6 +340,8 @@ void config_free(agent_config_t *c) {
   c->rules.path_count = 0;
   free(c->memory.path);
   c->memory.path = NULL;
+  free(c->memory.vector_store);
+  c->memory.vector_store = NULL;
   free(c->tools.root);
   c->tools.root = NULL;
   free(c->tools.directory);
@@ -479,7 +484,8 @@ static int fill_model(agent_config_t *c, yyjson_val *obj) {
 }
 
 static int fill_memory(agent_config_t *c, yyjson_val *obj) {
-  yyjson_val *v;
+  yyjson_val *v, *vec;
+  int b;
   if (!yyjson_is_obj(obj)) {
     fprintf(stderr, "neo: config error at /memory: expected object\n");
     return -1;
@@ -487,6 +493,23 @@ static int fill_memory(agent_config_t *c, yyjson_val *obj) {
   cfg_set_str(&c->memory.path, obj, "path");
   v = yyjson_obj_get(obj, "max_chars");
   if (yyjson_is_int(v) || yyjson_is_uint(v)) c->memory.max_chars = (int)yyjson_get_sint(v);
+  /* vector.*：可选本地检索；缺省关闭，与历史全文截断一致 */
+  vec = yyjson_obj_get(obj, "vector");
+  if (yyjson_is_obj(vec)) {
+    v = yyjson_obj_get(vec, "enabled");
+    if (v && yy_bool(v, &b) == 0) c->memory.vector_enabled = b;
+    cfg_set_str(&c->memory.vector_store, vec, "store");
+    v = yyjson_obj_get(vec, "top_k");
+    if (yyjson_is_int(v) || yyjson_is_uint(v)) {
+      int k = (int)yyjson_get_sint(v);
+      if (k > 0) c->memory.vector_top_k = k;
+    }
+    v = yyjson_obj_get(vec, "dims");
+    if (yyjson_is_int(v) || yyjson_is_uint(v)) {
+      int d = (int)yyjson_get_sint(v);
+      if (d >= 8 && d <= 256) c->memory.vector_dims = d;
+    }
+  }
   return 0;
 }
 
@@ -902,6 +925,9 @@ int config_load_file(agent_config_t *c, const char *path) {
   }
 
   c->memory.max_chars = 4000;
+  c->memory.vector_enabled = 0;
+  c->memory.vector_top_k = 5;
+  c->memory.vector_dims = 64;
   c->model.max_tokens = 4096;
   c->model.temperature = 0.7;
   c->bootstrap.max_chars_per_file = 8000;

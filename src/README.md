@@ -13,4 +13,5 @@ Neo 的 C99 源码树。编译产物（`.o`）输出到仓库根目录 **`build/
 | `llm/` | OpenAI 兼容 HTTP 客户端 |
 | `capability/` | 能力矩阵、目录加载、工具循环、MCP stdio |
 | `dag/` | DAG 执行、目录加载、plan |
-| `vendor/` | 第三方 amalgamation（yyjson）；尽量少改 |
+| `memory/` | 本地向量记忆（`vdb.h` 封装；embedding 进程内） |
+| `vendor/` | 第三方 amalgamation（yyjson、vdb、BearHttps）；尽量少改 |
