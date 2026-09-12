@@ -1,0 +1,29 @@
+{
+  name: "weather_wttr",
+  description: "Fetch a short current-weather line for a city via wttr.in (HTTPS, curl).",
+  when: [
+    "User asks for weather / 天气 / 气温 / forecast for a city or place",
+    "Need live conditions rather than model guesswork",
+  ],
+  when_not: [
+    "Historical climate research or multi-day planning without live data",
+    "General HTTP fetches unrelated to weather (use http_get when Policy allows)",
+  ],
+  tags: ["weather", "local", "http"],
+  outcome: "One-line summary like: Nanjing: 🌦 +18°C",
+  requires: [],
+  argv: ["./scripts/tools/weather-wttr.sh"],
+  timeout_sec: 20,
+  max_output_bytes: 2048,
+  pass_args: "env",
+  parameters: {
+    type: "object",
+    properties: {
+      city: {
+        type: "string",
+        description: "City or place name, e.g. Nanjing, 南京, Shanghai",
+      },
+    },
+    required: ["city"],
+  },
+}

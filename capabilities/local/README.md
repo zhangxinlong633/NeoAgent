@@ -7,5 +7,6 @@
 | `date_iso.json5` | `date_iso` | UTC ISO-8601 时间戳 |
 | `uname_info.json5` | `uname_info` | `uname -a` |
 | `pwd_print.json5` | `pwd_print` | 沙箱 cwd（`capability_matrix.root`） |
+| `weather_wttr.json5` | `weather_wttr` | 经 `scripts/tools/weather-wttr.sh` 查询 wttr.in 短天气行 |
 
 本目录无子目录。选型元数据见 [`AGENTS.md`](../../AGENTS.md) §4.1。

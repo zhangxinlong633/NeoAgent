@@ -80,7 +80,7 @@
 ./neo -c config/config.json5 -m deepseek-chat "南京有哪些必去的地方？"
 ```
 
-若启用了 `rules/`（如 `rules/nanjing.md`），领域约束会进入 system prompt，答法以规则为准。见 [`claw.md`](claw.md)。
+答法以当前 `rules/`（如 `identity.md`、`response-playbook.md`）与矩阵能力为准。见 [`claw.md`](claw.md)。查实时天气用矩阵能力 `weather_wttr`（见 §3）。
 
 ### 2.3 临时关闭工具
 
@@ -127,6 +127,15 @@ neo tool: read_file
 ```bash
 ./neo "调用 date_iso，告诉我现在的 UTC 时间。" 2>&1
 ```
+
+### 3.3.1 城市天气（目录能力 `weather_wttr`）
+
+```bash
+./neo -R "看下南京今天的天气"
+# 或显式：./neo "调用 weather_wttr，city 为 南京"
+```
+
+依赖本机 `curl` 与外网访问 wttr.in；城市名经脚本校验，不拼 shell。
 
 ### 3.4 Unix 白名单能力（需 `unix` 在 `manifest.load` 且列入 `enabled.json5`）
 

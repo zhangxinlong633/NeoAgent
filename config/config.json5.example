@@ -23,7 +23,6 @@
     max_chars_per_file: 6000,
     paths: [
       "rules/identity.md",
-      "rules/nanjing.md",
       "rules/response-playbook.md",
     ],
   },

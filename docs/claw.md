@@ -155,7 +155,7 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null)"   # 在任意子目录时回�
 
 ### 5.0 本仓库截取说明
 
-下列 5.0.x 中部分「skills」实录为历史截图；现行仓库已删除 `skills/`，请改看 `rules/identity.md`、`rules/nanjing.md`、`rules/response-playbook.md`，并用 `./neo -d` 核对当前 system prompt。
+下列 5.0.x 中部分「skills」实录为历史截图；现行仓库已删除 `skills/`，请改看 `rules/identity.md`、`rules/response-playbook.md`，并用 `./neo -d` 核对当前 system prompt。
 
 下列内容来自 **neoclaw 仓库** 当前文件与一次本机命令输出；其中 **UTC 日期**、**模型回复** 会随你运行时间与网关变化，仅作形态参考。
 
@@ -285,7 +285,6 @@ pong
     max_chars_per_file: 6000,
     paths: [
       "rules/identity.md",
-      "rules/nanjing.md",
       "rules/response-playbook.md",
     ],
   },
@@ -305,7 +304,7 @@ pong
 ```
 
 - **`bootstrap`**：身份类 Markdown（如仓库根 `AGENTS.md` 或自定义路径）。
-- **`rules`**：硬约束与答法；南京等必引数据见 `rules/nanjing.md`（**不再**使用已废弃的 `skills/`）。
+- **`rules`**：硬约束与答法（如 `rules/identity.md`、`rules/response-playbook.md`；**不再**使用已废弃的 `skills/`）。
 - **`memory.path: MEMORY.md`**：与默认示例一致；正文见 **5.5**。
 - 可发现能力走 **Capability Matrix** / **DAG catalog**，见 [examples.md](examples.md)。
 

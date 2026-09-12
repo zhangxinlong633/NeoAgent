@@ -26,7 +26,6 @@
     paths: [
       "example/RULES.md",
       "rules/identity.md",
-      "rules/nanjing.md",
       "rules/response-playbook.md",
     ],
   },
