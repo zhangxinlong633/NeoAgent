@@ -26,6 +26,9 @@ typedef struct {
   char *vector_store;
   int vector_top_k;
   int vector_dims;
+  /* vector.auto_store：对话启发式写入；默认关 */
+  int auto_store_enabled;
+  int auto_store_max_chars;
 } memory_config_t;
 
 /* OpenClaw-style persona file (injected before bootstrap as ## Soul) */

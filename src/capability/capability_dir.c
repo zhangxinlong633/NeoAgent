@@ -31,7 +31,7 @@ static char *dup_s(const char *s) {
 static int name_reserved(const char *name) {
   static const char *r[] = {"read_file", "write_file", "append_file", "list_dir", "http_get",
                             "grep",      "run_command", "stat",        "mkdir",    "propose_capability",
-                            NULL};
+                            "memory_add", NULL};
   int i;
   for (i = 0; r[i]; i++)
     if (name && strcmp(name, r[i]) == 0) return 1;

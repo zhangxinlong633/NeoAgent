@@ -65,7 +65,8 @@ static int tool_command_name_reserved(const char *name) {
                   strcmp(name, "list_dir") == 0 || strcmp(name, "http_get") == 0 ||
                   strcmp(name, "grep") == 0 || strcmp(name, "run_command") == 0 ||
                   strcmp(name, "stat") == 0 || strcmp(name, "mkdir") == 0 ||
-                  strcmp(name, "append_file") == 0 || strcmp(name, "propose_capability") == 0);
+                  strcmp(name, "append_file") == 0 || strcmp(name, "propose_capability") == 0 ||
+                  strcmp(name, "memory_add") == 0);
 }
 
 static void free_dags(dag_t *wfs, int n) {
@@ -314,6 +315,7 @@ void config_init(agent_config_t *c) {
   c->memory.max_chars = 4000;
   c->memory.vector_top_k = 5;
   c->memory.vector_dims = 64;
+  c->memory.auto_store_max_chars = 500;
   c->tools.max_rounds = 16;
   c->tools.max_read_bytes = 262144;
   c->tools.list_dir_max_entries = 256;
@@ -508,6 +510,18 @@ static int fill_memory(agent_config_t *c, yyjson_val *obj) {
     if (yyjson_is_int(v) || yyjson_is_uint(v)) {
       int d = (int)yyjson_get_sint(v);
       if (d >= 8 && d <= 256) c->memory.vector_dims = d;
+    }
+    {
+      yyjson_val *as = yyjson_obj_get(vec, "auto_store");
+      if (yyjson_is_obj(as)) {
+        v = yyjson_obj_get(as, "enabled");
+        if (v && yy_bool(v, &b) == 0) c->memory.auto_store_enabled = b;
+        v = yyjson_obj_get(as, "max_chars");
+        if (yyjson_is_int(v) || yyjson_is_uint(v)) {
+          int mc = (int)yyjson_get_sint(v);
+          if (mc > 0) c->memory.auto_store_max_chars = mc;
+        }
+      }
     }
   }
   return 0;
@@ -928,6 +942,8 @@ int config_load_file(agent_config_t *c, const char *path) {
   c->memory.vector_enabled = 0;
   c->memory.vector_top_k = 5;
   c->memory.vector_dims = 64;
+  c->memory.auto_store_enabled = 0;
+  c->memory.auto_store_max_chars = 500;
   c->model.max_tokens = 4096;
   c->model.temperature = 0.7;
   c->bootstrap.max_chars_per_file = 8000;

@@ -31,6 +31,10 @@ tests/fixtures/.tmp_memory_ignore.vdb
 tests/fixtures/.tmp_memory_ignore.vdb.txts
 tests/fixtures/.tmp_cli_memory.vdb
 tests/fixtures/.tmp_cli_memory.vdb.txts
+tests/fixtures/.tmp_memory_auto.vdb
+tests/fixtures/.tmp_memory_auto.vdb.txts
+tests/fixtures/.tmp_memory_add.vdb
+tests/fixtures/.tmp_memory_add.vdb.txts
 # legacy names (pre workflow→DAG rename)
 tests/test_parse_workflows
 tests/test_workflow_loop

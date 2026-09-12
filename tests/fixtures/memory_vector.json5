@@ -13,6 +13,7 @@
       store: "tests/fixtures/.tmp_cli_memory.vdb",
       top_k: 3,
       dims: 32,
+      auto_store: { enabled: true, max_chars: 120 },
     },
   },
   capability_matrix: {

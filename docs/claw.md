@@ -118,7 +118,8 @@ Neo 把「钉在仓库上的助手」拆成 **配置 + Markdown（claw）+ 能�
 - **bootstrap**：继续用来列 `AGENTS.md` 等「任务与边界」；顺序上在 soul **之后**，因此 AGENTS 可以引用「人格见 Soul 段」这类分工。
 - **memory**：`memory.path` + `max_chars`；可选 `memory.vector`（本地分块检索，默认关）。适合放**会随时间变**的笔记，与相对稳定的 soul/rules 区分。启用 `vector.enabled` 时按用户问题召回相关块注入 `## Memory`，仍受 `max_chars` 预算约束；embedding 仅本地，不调外部 API。
 - **命令行**：`./neo memory store "笔记"` 写入本地向量库（**不写** `MEMORY.md`）；`./neo memory recall "问题"` 试召回。需 `memory.vector.enabled: true`。stderr 有 `neo memory:` 摘要；日常提问加 `-v` / `-d` 同样可见。
-- **vector 开**：prompt 注入只查库；**vector 关**：仍截断读 `memory.path`。
+- **vector 开**：prompt 注入只查库；矩阵出现 `memory_add`；可选 `vector.auto_store.enabled` 启发式写入（默认关）。
+- **vector 关**：仍截断读 `memory.path`。
 
 ---
 

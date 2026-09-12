@@ -246,6 +246,7 @@ int run_daemon_stdin(agent_config_t *conf, int debug, int verbose) {
     while (len > 0 && (line_buf[len - 1] == '\n' || line_buf[len - 1] == '\r')) line_buf[--len] = '\0';
     if (len == 0) continue;
     if (strcmp(line_buf, "exit") == 0 || strcmp(line_buf, "quit") == 0) break;
+    (void)neo_memory_auto_store(conf, line_buf, verbose || debug);
     build_system_prompt(conf, line_buf, system_prompt, SYSTEM_MAX, verbose || debug);
     if (debug) daemon_debug_print(conf, system_prompt, line_buf);
     llm_response_t resp = {0};
@@ -315,6 +316,7 @@ int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, 
     }
     line_buf[n] = '\0';
     if (n > 0) {
+      (void)neo_memory_auto_store(conf, line_buf, verbose || debug);
       build_system_prompt(conf, line_buf, system_prompt, SYSTEM_MAX, verbose || debug);
       if (debug) daemon_debug_print(conf, system_prompt, line_buf);
       llm_response_t resp = {0};

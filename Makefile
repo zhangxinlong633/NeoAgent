@@ -91,6 +91,7 @@ $(TEST_PARSE_DAG): tests/test_parse_dags.c src/core/config.c src/capability/capa
 TEST_DAG_SRCS = src/dag/dag.c src/dag/dag_dir.c src/capability/agent_tools.c \
 	src/capability/command_tools.c src/core/config.c $(TEST_HTTP) src/llm/llm.c \
 	src/capability/capability_matrix.c src/capability/capability_dir.c src/capability/mcp_stdio.c \
+	src/memory/neo_memory.c src/memory/neo_embed.c \
 	$(TEST_VENDOR)
 
 TEST_DAG_LOOP = tests/test_dag_loop
@@ -117,11 +118,11 @@ TEST_CAP_MATRIX = tests/test_capability_matrix
 $(TEST_CAP_MATRIX): tests/test_capability_matrix.c src/capability/capability_matrix.c \
 		src/capability/capability_dir.c src/dag/dag_dir.c src/capability/mcp_stdio.c \
 		src/core/config.c $(TEST_HTTP) src/capability/agent_tools.c src/capability/command_tools.c \
-		src/llm/llm.c $(TEST_VENDOR)
+		src/llm/llm.c src/memory/neo_memory.c src/memory/neo_embed.c $(TEST_VENDOR)
 	$(CC) $(TEST_CFLAGS) -o $@ tests/test_capability_matrix.c src/capability/capability_matrix.c \
 		src/capability/capability_dir.c src/dag/dag_dir.c src/capability/mcp_stdio.c \
 		src/core/config.c $(TEST_HTTP) src/capability/agent_tools.c src/capability/command_tools.c \
-		src/llm/llm.c $(TEST_VENDOR) $(LDFLAGS)
+		src/llm/llm.c src/memory/neo_memory.c src/memory/neo_embed.c $(TEST_VENDOR) $(LDFLAGS)
 
 TEST_NEO_EMBED = tests/test_neo_embed
 $(TEST_NEO_EMBED): tests/test_neo_embed.c src/memory/neo_embed.c src/memory/neo_embed.h

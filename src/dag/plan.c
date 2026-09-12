@@ -500,6 +500,14 @@ int plan_materialize_config(const agent_config_t *base, const char *dags_json,
                            base->memory.vector_top_k > 0 ? base->memory.vector_top_k : 5);
     yyjson_mut_obj_add_int(mdoc, vec, "dims",
                            base->memory.vector_dims > 0 ? base->memory.vector_dims : 64);
+    if (base->memory.auto_store_enabled) {
+      yyjson_mut_val *as = yyjson_mut_obj(mdoc);
+      yyjson_mut_obj_add_val(mdoc, vec, "auto_store", as);
+      yyjson_mut_obj_add_bool(mdoc, as, "enabled", 1);
+      yyjson_mut_obj_add_int(
+          mdoc, as, "max_chars",
+          base->memory.auto_store_max_chars > 0 ? base->memory.auto_store_max_chars : 500);
+    }
   }
 
   sess = yyjson_mut_obj(mdoc);

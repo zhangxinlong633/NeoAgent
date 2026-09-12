@@ -431,3 +431,73 @@ int neo_memory_recall(neo_memory_t *m, const char *query, char **out) {
 int neo_memory_count(const neo_memory_t *m) {
   return m ? m->n_texts : 0;
 }
+
+static int ascii_contains_ci(const char *hay, const char *needle) {
+  size_t hl, nl, i, j;
+  if (!hay || !needle || !needle[0]) return 0;
+  hl = strlen(hay);
+  nl = strlen(needle);
+  if (nl > hl) return 0;
+  for (i = 0; i + nl <= hl; i++) {
+    for (j = 0; j < nl; j++) {
+      unsigned char a = (unsigned char)hay[i + j];
+      unsigned char b = (unsigned char)needle[j];
+      if (a >= 'A' && a <= 'Z') a = (unsigned char)(a + 32);
+      if (b >= 'A' && b <= 'Z') b = (unsigned char)(b + 32);
+      if (a != b) break;
+    }
+    if (j == nl) return 1;
+  }
+  return 0;
+}
+
+/* 用户句是否像「请记住 / 偏好」类意图。 */
+static int looks_like_memory_intent(const char *text) {
+  static const char *zh[] = {"记住", "请记得", "别忘了", "偏好", "以后都", "以后请", "从今以后", NULL};
+  static const char *en[] = {"remember", "don't forget", "dont forget", "prefer", "preference",
+                             "from now on", "always use", NULL};
+  int i;
+  if (!text || !text[0]) return 0;
+  for (i = 0; zh[i]; i++)
+    if (strstr(text, zh[i])) return 1;
+  for (i = 0; en[i]; i++)
+    if (ascii_contains_ci(text, en[i])) return 1;
+  return 0;
+}
+
+int neo_memory_auto_store(const agent_config_t *conf, const char *user_text, int verbose) {
+  neo_memory_t *m;
+  char *clip = NULL;
+  size_t n, maxc;
+  int rc;
+  if (!conf || !user_text || !user_text[0]) return 0;
+  if (!conf->memory.vector_enabled || !conf->memory.auto_store_enabled) return 0;
+  if (!looks_like_memory_intent(user_text)) return 0;
+
+  maxc = (size_t)(conf->memory.auto_store_max_chars > 0 ? conf->memory.auto_store_max_chars : 500);
+  n = strlen(user_text);
+  if (n > maxc) {
+    size_t take = utf8_prefix(user_text, maxc);
+    clip = malloc(take + 1);
+    if (!clip) return -1;
+    memcpy(clip, user_text, take);
+    clip[take] = '\0';
+  }
+
+  m = neo_memory_open(conf);
+  if (!m) {
+    free(clip);
+    return -1;
+  }
+  rc = neo_memory_store(m, clip ? clip : user_text);
+  if (verbose) {
+    if (rc == 0)
+      fprintf(stderr, "neo memory: auto-store chars=%zu chunks=%d\n",
+              clip ? strlen(clip) : n, neo_memory_count(m));
+    else
+      fprintf(stderr, "neo memory: auto-store failed\n");
+  }
+  neo_memory_close(m);
+  free(clip);
+  return rc == 0 ? 1 : -1;
+}

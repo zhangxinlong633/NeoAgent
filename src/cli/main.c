@@ -560,6 +560,8 @@ int main(int argc, char **argv) {
 #endif
 
   build_user_message(user_message, USER_MAX, argv, arg_start, argc);
+  /* 启发式先写入，再 recall，使本轮 system 可能已含新记忆 */
+  (void)neo_memory_auto_store(&conf, user_message, verbose || debug);
   if (tmp && conf.soul.path && conf.soul.path[0]) {
     size_t max_soul = (conf.soul.max_chars > 0) ? (size_t)conf.soul.max_chars : 8000;
     if (read_file_into(tmp, 65536, conf.soul.path, max_soul) > 0)

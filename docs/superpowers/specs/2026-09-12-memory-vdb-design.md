@@ -109,9 +109,8 @@ Daemon 多轮：每轮用当前 user 行 recall（或首轮索引、每轮只 se
 
 
 
-## 9. 修订：store 直写 DB（2026-09-12）
+## 10. 修订：auto_store + memory_add（2026-09-12）
 
-- `neo memory store` 写入 `vector.store` + `.txts` sidecar，**不追加 MEMORY.md**。
-- `vector.enabled` 时 `open` 从磁盘装库；`recall` 只查库。
-- `vector.enabled` 关时行为不变（截断 `memory.path`）。
+- `vector.auto_store.enabled`（默认 false）：用户句启发式写入 vdb。
+- Capability Matrix builtin `memory_add`（仅 `vector.enabled` 时注册）。
 

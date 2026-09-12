@@ -653,6 +653,46 @@ static int test_cap_dir_and_propose(void) {
   return 0;
 }
 
+static int test_memory_add_row_and_dispatch(void) {
+  agent_config_t conf;
+  capability_matrix_t m;
+  char *out = NULL;
+  size_t out_len = 0;
+  char store[] = "tests/fixtures/.tmp_memory_add.vdb";
+  char tp[512];
+
+  unlink(store);
+  snprintf(tp, sizeof(tp), "%s.txts", store);
+  unlink(tp);
+
+  config_init(&conf);
+  conf.tools.enabled = 1;
+  conf.tools.root = strdup(".");
+  conf.memory.vector_enabled = 1;
+  conf.memory.vector_store = strdup(store);
+  conf.memory.vector_dims = 32;
+  conf.memory.vector_top_k = 3;
+
+  capability_matrix_init(&m);
+  if (capability_matrix_build_from_config(&m, &conf) != 0) FAIL("build");
+  if (!capability_matrix_find(&m, "memory_add")) FAIL("memory_add missing");
+  capability_matrix_free(&m);
+
+  if (neo_dispatch_tool(&conf, ".", "memory_add", "{\"text\":\"remember dark mode prefs\"}", &out,
+                        &out_len) != 0)
+    FAIL("dispatch");
+  if (!out || !strstr(out, "OK")) {
+    free(out);
+    FAIL("dispatch result");
+  }
+  free(out);
+  free(conf.tools.root);
+  free(conf.memory.vector_store);
+  unlink(store);
+  unlink(tp);
+  return 0;
+}
+
 int main(void) {
   if (test_empty_and_basics()) return 1;
   if (test_build_schema_fixture()) return 1;
@@ -662,6 +702,7 @@ int main(void) {
   if (test_dispatch_builtins()) return 1;
   if (test_shell_and_mcp()) return 1;
   if (test_cap_dir_and_propose()) return 1;
+  if (test_memory_add_row_and_dispatch()) return 1;
   printf("ok\n");
   return 0;
 }

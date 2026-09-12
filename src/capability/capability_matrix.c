@@ -48,6 +48,10 @@ static const char *PARAMS_PROPOSE =
     "\"timeout_sec\":{\"type\":\"integer\"},"
     "\"pass_args\":{\"type\":\"string\"}},"
     "\"required\":[\"name\",\"description\",\"argv\"]}";
+static const char *PARAMS_MEMORY_ADD =
+    "{\"type\":\"object\",\"properties\":{"
+    "\"text\":{\"type\":\"string\",\"description\":\"Fact or preference to remember\"}},"
+    "\"required\":[\"text\"]}";
 
 void capability_matrix_init(capability_matrix_t *m) {
   if (!m) return;
@@ -224,6 +228,17 @@ int capability_matrix_build_from_config(capability_matrix_t *m, const agent_conf
                 "Need a new external command capability that is missing from the matrix.",
                 "Do not use for one-off shell; drafts are not hot-loaded.", "meta,propose",
                 "Path of proposed JSON5 + reminder to move+restart.") != 0)
+      return -1;
+  }
+
+  /* 仅本地向量记忆开启时暴露；写入 vdb，不写 MEMORY.md */
+  if (conf->memory.vector_enabled) {
+    if (add_row(m, "memory_add", CAP_SRC_BUILTIN,
+                "Store a short fact or preference into Neo local vector memory (not MEMORY.md).",
+                PARAMS_MEMORY_ADD, CAP_EFFECT_WRITE, CAP_BUILTIN_MEMORY_ADD, NULL,
+                "User asked to remember something, or a durable preference/fact should persist.",
+                "Do not store secrets, one-off task chatter, or huge dumps.", "memory",
+                "OK with chunk count, or ERROR.") != 0)
       return -1;
   }
 

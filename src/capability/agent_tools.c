@@ -8,6 +8,7 @@
 #include "command_tools.h"
 #include "mcp_stdio.h"
 #include "neo_http.h"
+#include "neo_memory.h"
 #include "yyjson.h"
 #include <ctype.h>
 #include <errno.h>
@@ -902,6 +903,25 @@ static int run_one_tool(const agent_config_t *conf, const char *root_real, NeoTo
     r = neo_buf_append(result, out ? out : "", 0);
     free(out);
     return r;
+  }
+  if (strcmp(tc->name, "memory_add") == 0) {
+    char text[4096];
+    neo_memory_t *mem;
+    char okbuf[96];
+    if (!conf->memory.vector_enabled)
+      return neo_buf_append(result, "ERROR: memory_add requires memory.vector.enabled", 0);
+    if (extract_string_field(tc->arguments ? tc->arguments : "{}", "text", text, sizeof(text)) != 0 ||
+        !text[0])
+      return neo_buf_append(result, "ERROR: memory_add requires text", 0);
+    mem = neo_memory_open(conf);
+    if (!mem) return neo_buf_append(result, "ERROR: memory open failed", 0);
+    if (neo_memory_store(mem, text) != 0) {
+      neo_memory_close(mem);
+      return neo_buf_append(result, "ERROR: memory_add store failed", 0);
+    }
+    snprintf(okbuf, sizeof(okbuf), "OK: stored (%d chunks in memory)", neo_memory_count(mem));
+    neo_memory_close(mem);
+    return neo_buf_append(result, okbuf, 0);
   }
   if (strcmp(tc->name, "list_dir") == 0)
     return tool_list_dir(conf, root_real, tc->arguments, result);

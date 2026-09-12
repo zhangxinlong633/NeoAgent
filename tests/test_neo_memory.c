@@ -120,6 +120,42 @@ static int test_vector_ignores_memory_md(void) {
   return 0;
 }
 
+static int test_auto_store_heuristic(void) {
+  agent_config_t conf;
+  char store[] = "tests/fixtures/.tmp_memory_auto.vdb";
+  char *out = NULL;
+  neo_memory_t *m;
+  int r;
+
+  unlink_store(store);
+  config_init(&conf);
+  conf.memory.vector_enabled = 1;
+  conf.memory.auto_store_enabled = 1;
+  conf.memory.auto_store_max_chars = 200;
+  conf.memory.vector_store = strdup(store);
+  conf.memory.vector_dims = 64;
+  conf.memory.vector_top_k = 3;
+
+  r = neo_memory_auto_store(&conf, "今天天气不错", 0);
+  if (r != 0) FAIL("non-trigger should skip");
+
+  r = neo_memory_auto_store(&conf, "请记住我喜欢 dark mode", 0);
+  if (r != 1) FAIL("zh trigger should store");
+
+  r = neo_memory_auto_store(&conf, "Please remember I prefer large fonts", 0);
+  if (r != 1) FAIL("en trigger should store");
+
+  m = neo_memory_open(&conf);
+  if (!m || neo_memory_count(m) < 2) FAIL("expected stored chunks");
+  if (neo_memory_recall(m, "dark mode", &out) != 0 || !out || !strstr(out, "dark mode"))
+    FAIL("recall after auto-store");
+  free(out);
+  neo_memory_close(m);
+  free(conf.memory.vector_store);
+  unlink_store(store);
+  return 0;
+}
+
 static int test_config_vector_parse(void) {
   agent_config_t conf;
   const char *cfg = "tests/fixtures/memory_vector.json5";
@@ -132,6 +168,8 @@ static int test_config_vector_parse(void) {
     FAIL("store");
   if (conf.memory.vector_top_k != 3) FAIL("top_k");
   if (conf.memory.vector_dims != 32) FAIL("dims");
+  if (!conf.memory.auto_store_enabled) FAIL("auto_store");
+  if (conf.memory.auto_store_max_chars != 120) FAIL("auto_store max_chars");
   config_free(&conf);
   return 0;
 }
@@ -140,6 +178,7 @@ int main(void) {
   if (test_disabled_truncates() != 0) return 1;
   if (test_store_recall_and_persist() != 0) return 1;
   if (test_vector_ignores_memory_md() != 0) return 1;
+  if (test_auto_store_heuristic() != 0) return 1;
   if (test_config_vector_parse() != 0) return 1;
   printf("ok test_neo_memory\n");
   return 0;

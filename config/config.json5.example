@@ -34,7 +34,13 @@
     path: "MEMORY.md",
     max_chars: 4000,
     // Optional local vector recall (default off; no external embedding API):
-    // vector: { enabled: true, store: ".neo/memory.vdb", top_k: 5, dims: 64 },
+    // vector: {
+    //   enabled: true,
+    //   store: ".neo/memory.vdb",
+    //   top_k: 5,
+    //   dims: 64,
+    //   auto_store: { enabled: false, max_chars: 500 }, // heuristic; memory_add tool when enabled
+    // },
   },
 
   session: {

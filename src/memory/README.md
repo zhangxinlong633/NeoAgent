@@ -8,8 +8,9 @@ CLI / daemon 只通过 `neo_memory.h` 注入 `## Memory`；**禁止**在其它�
 
 - 从 `memory.vector.store` 读写本地向量库；`neo memory store` 直写 DB（sidecar 存文本），**不写** `MEMORY.md`。
 - `memory.vector.enabled` 为 false 时 recall 回退为 `memory.path` 全文截断。
-- vector 开启时 recall **只查库**，忽略 `MEMORY.md`。
-- 不负责 Capability Matrix 工具、不负责自动把对话写入笔记。
+- vector 开启时 recall **只查库**，忽略 `MEMORY.md`；矩阵暴露 `memory_add`。
+- 可选 `vector.auto_store`：用户句命中「记住/偏好/remember…」时自动写入（默认关）。
+- 不负责自动把整段对话写入；不写 `MEMORY.md`。
 
 ## 文件
 
