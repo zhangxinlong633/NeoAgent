@@ -10,6 +10,7 @@
 4. [`examples.md`](examples.md) — 开箱组合、长样例、排错表
 5. [`tool.md`](tool.md) / [`dag.md`](dag.md) / [`claw.md`](claw.md) — 子系统细则
 6. [`applications.md`](applications.md) / [`architecture.md`](architecture.md) — 场景与目标架构
+7. [`evaluations/`](evaluations/) — 阶段性系统评价（按日期归档，定期新增）
 
 ## 主要文档
 
@@ -25,4 +26,5 @@
 
 ## 子目录
 
-1. `superpowers/` — 设计规格与实施计划（**不是**日常用户手册）
+1. `evaluations/` — 阶段性系统评价纪要（`YYYY-MM-DD.md`；索引见该目录 `README.md`）
+2. `superpowers/` — 设计规格与实施计划（**不是**日常用户手册）
