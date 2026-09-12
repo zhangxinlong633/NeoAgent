@@ -10,6 +10,7 @@
 #include "llm.h"
 #include "neo_md_term.h"
 #include "neo_memory.h"
+#include "neo_session.h"
 #include "plan.h"
 #include "dag.h"
 #include <limits.h>
@@ -73,6 +74,8 @@ static void print_usage(const char *prog) {
   fprintf(stderr, "  -d, --debug         Print system prompt, user message and request params to stderr\n");
   fprintf(stderr, "  -v, --verbose       Step / capability / memory summaries on stderr\n");
   fprintf(stderr, "  -R, --render        Render assistant Markdown to the terminal (md4c)\n");
+  fprintf(stderr, "  -S, --session ID    Persist/reuse chat turns under .neo/sessions/ID.json\n");
+  fprintf(stderr, "  --session-clear ID  Delete a saved session file and exit\n");
   fprintf(stderr, "  -o, --output FILE   (with plan/run) Save planned dags JSON\n");
   fprintf(stderr, "  --steps N           (with plan/run) Soft target step count (default 10, max 32)\n");
   fprintf(stderr, "  -h, --help          Show this help\n");
@@ -257,6 +260,8 @@ int main(int argc, char **argv) {
   int debug = 0;
   int verbose = 0;
   int render = 0;
+  const char *session_id = NULL;
+  int session_clear = 0;
   int dag_mode = 0;
   const char *dag_name = NULL;
   int memory_mode = 0; /* 1=recall 2=store */
@@ -380,6 +385,19 @@ int main(int argc, char **argv) {
     if (strcmp(argv[arg_start], "--render") == 0 || strcmp(argv[arg_start], "-R") == 0) {
       render = 1;
       arg_start++;
+      continue;
+    }
+    if (strcmp(argv[arg_start], "--session") == 0 || strcmp(argv[arg_start], "-S") == 0) {
+      if (arg_start + 1 >= argc) { fprintf(stderr, "neo: --session requires ID\n"); return 1; }
+      session_id = argv[arg_start + 1];
+      arg_start += 2;
+      continue;
+    }
+    if (strcmp(argv[arg_start], "--session-clear") == 0) {
+      if (arg_start + 1 >= argc) { fprintf(stderr, "neo: --session-clear requires ID\n"); return 1; }
+      session_id = argv[arg_start + 1];
+      session_clear = 1;
+      arg_start += 2;
       continue;
     }
     break;
@@ -523,6 +541,24 @@ int main(int argc, char **argv) {
     return r != 0;
   }
 
+  if (session_clear) {
+    if (!neo_session_id_ok(session_id)) {
+      fprintf(stderr, "neo: invalid session id (use [A-Za-z0-9_-], max 64)\n");
+      return 1;
+    }
+    if (neo_session_clear(session_id) != 0) {
+      fprintf(stderr, "neo: failed to clear session '%s'\n", session_id);
+      return 1;
+    }
+    if (verbose) fprintf(stderr, "neo session: cleared id=%s\n", session_id);
+    return 0;
+  }
+
+  if (session_id && !neo_session_id_ok(session_id)) {
+    fprintf(stderr, "neo: invalid session id (use [A-Za-z0-9_-], max 64)\n");
+    return 1;
+  }
+
   if (arg_start >= argc) {
     fprintf(stderr, "Usage: neo [OPTIONS] \"your message\" or neo run \"task\" or neo daemon\n");
     return 1;
@@ -647,10 +683,44 @@ int main(int argc, char **argv) {
                        system_prompt, user_message);
 
   llm_response_t resp = {0};
+  llm_message_t *prefix = NULL;
+  int n_prefix = 0;
   int err;
+
+  if (session_id) {
+    if (neo_session_load(session_id, &prefix, &n_prefix) != 0) {
+      fprintf(stderr, "neo: failed to load session '%s'\n", session_id);
+      config_free(&conf);
+      free(system_prompt);
+      free(user_message);
+      free(tmp);
+      return 1;
+    }
+    if (verbose || debug) {
+      char spath[256];
+      if (neo_session_path(session_id, spath, sizeof(spath)) == 0)
+        fprintf(stderr, "neo session: id=%s turns~=%d path=%s\n", session_id, n_prefix / 2, spath);
+    }
+  }
+
   if (conf.tools.enabled && getenv(NEO_DISABLE_TOOLS_GETENV) == NULL)
-    err = agent_run_with_tools(&conf, system_prompt, NULL, 0, user_message, &resp);
-  else
+    err = agent_run_with_tools(&conf, system_prompt, prefix, n_prefix, user_message, &resp);
+  else if (n_prefix > 0) {
+    llm_message_t *msgs = malloc((size_t)(n_prefix + 1) * sizeof(llm_message_t));
+    int ni = 0;
+    if (!msgs) {
+      err = -1;
+    } else {
+      for (ni = 0; ni < n_prefix; ni++)
+        msgs[ni] = prefix[ni];
+      msgs[n_prefix] = (llm_message_t){ "user", user_message };
+      err = llm_chat_messages(
+        conf.model.base_url, conf.model.name, conf.model.api_key,
+        conf.model.max_tokens, conf.model.temperature,
+        system_prompt, msgs, n_prefix + 1, &resp);
+      free(msgs);
+    }
+  } else
     err = llm_chat(
       conf.model.base_url,
       conf.model.name,
@@ -661,6 +731,16 @@ int main(int argc, char **argv) {
       user_message,
       &resp
     );
+  neo_session_free(prefix, n_prefix);
+  {
+    int max_turns = conf.session_max_turns > 0 ? conf.session_max_turns : 10;
+    if (err == 0 && session_id && resp.data && resp.size) {
+      if (neo_session_append_turn(session_id, user_message, resp.data, max_turns) != 0)
+        fprintf(stderr, "neo: warning: failed to save session '%s'\n", session_id);
+      else if (verbose || debug)
+        fprintf(stderr, "neo session: saved id=%s\n", session_id);
+    }
+  }
   config_free(&conf);
   free(system_prompt);
   free(user_message);

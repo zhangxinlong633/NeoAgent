@@ -114,6 +114,11 @@ cp config/config.json5.example config/config.json5
 # 终端内渲染 Markdown 回复（内置 md4c）
 ./neo -R "用三句话说明 Neo Agent 适合完成哪些目标型任务"
 
+# 具名会话（跨进程续聊；落盘 .neo/sessions/<ID>.json）
+./neo -S ship -R "飞船怎么做"
+./neo -S ship -R "4. 真正的载人/货运飞船（国家级工程）"
+./neo --session-clear ship
+
 # 执行目录中的 DAG
 ./neo dag run show_time
 ./neo dag run workspace_brief

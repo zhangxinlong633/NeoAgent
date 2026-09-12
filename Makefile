@@ -17,6 +17,7 @@ SRC = \
 	src/core/daemon.c \
 	src/core/neo_http.c \
 	src/core/neo_md_term.c \
+	src/core/neo_session.c \
 	src/llm/llm.c \
 	src/capability/agent_tools.c \
 	src/capability/command_tools.c \
@@ -69,7 +70,8 @@ clean:
 		tests/test_capability_matrix \
 		tests/test_neo_embed \
 		tests/test_neo_memory \
-		tests/test_neo_md_term
+		tests/test_neo_md_term \
+		tests/test_neo_session
 
 # Shared flags for test binaries that compile vendor code from source.
 TEST_CFLAGS = $(CFLAGS) -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare
@@ -146,7 +148,11 @@ TEST_NEO_MD = tests/test_neo_md_term
 $(TEST_NEO_MD): tests/test_neo_md_term.c src/core/neo_md_term.c src/vendor/md4c.c
 	$(CC) $(TEST_CFLAGS) -o $@ tests/test_neo_md_term.c src/core/neo_md_term.c src/vendor/md4c.c
 
-test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TEST_DAG_TMPL) $(TEST_DAG_DAG) $(TEST_DAG_ON_FAIL) $(TEST_PLAN) $(TEST_CAP_MATRIX) $(TEST_NEO_EMBED) $(TEST_NEO_MEMORY) $(TEST_NEO_MD) neo
+TEST_NEO_SESSION = tests/test_neo_session
+$(TEST_NEO_SESSION): tests/test_neo_session.c src/core/neo_session.c src/vendor/yyjson.c
+	$(CC) $(TEST_CFLAGS) -o $@ tests/test_neo_session.c src/core/neo_session.c src/vendor/yyjson.c
+
+test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TEST_DAG_TMPL) $(TEST_DAG_DAG) $(TEST_DAG_ON_FAIL) $(TEST_PLAN) $(TEST_CAP_MATRIX) $(TEST_NEO_EMBED) $(TEST_NEO_MEMORY) $(TEST_NEO_MD) $(TEST_NEO_SESSION) neo
 	./$(TEST_PARSE_CMD)
 	./$(TEST_CMD_EXEC)
 	./$(TEST_PARSE_DAG)
@@ -159,6 +165,7 @@ test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TE
 	./$(TEST_NEO_EMBED)
 	./$(TEST_NEO_MEMORY)
 	./$(TEST_NEO_MD)
+	./$(TEST_NEO_SESSION)
 	./tests/cli_capability_matrix.sh
 
 test-cli: neo

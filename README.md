@@ -114,6 +114,11 @@ From the repository root (valid API credentials required):
 # Same reply with terminal Markdown rendering (md4c)
 ./neo -R "In three sentences, what goal-oriented tasks is Neo Agent good for?"
 
+# Named session (persist turns under .neo/sessions/<ID>.json)
+./neo -S ship -R "How do I build a spaceship?"
+./neo -S ship -R "Option 4: real crewed / cargo spacecraft"
+./neo --session-clear ship
+
 # Run catalog DAGs
 ./neo dag run show_time
 ./neo dag run workspace_brief

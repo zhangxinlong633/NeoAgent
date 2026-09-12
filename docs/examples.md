@@ -147,15 +147,24 @@ neo tool: read_file
 
 危险命令（如 `unix_rm`）默认不在白名单，调用应失败或不可见。调整见 [`capabilities/unix/README.md`](../capabilities/unix/README.md)。
 
-领域提示词评测（可选，不进默认 `make test`）：
+### 3.5 具名会话（跨进程上下文）
 
 ```bash
-make test-prompts-dry          # 校验 ≥1000 条语料
-make test-prompts-unit         # 规则打分单测
-# make test-prompts            # 另需本机 API：最多 50 条 live
+./neo -S demo -R "飞船怎么做"
+./neo -S demo -R "展开第 4 种：真正的载人/货运飞船"
+./neo --session-clear demo
 ```
 
-详见 [`tests/prompts/README.md`](../tests/prompts/README.md)。
+`-S` / `--session ID` 将 user/assistant 轮次写入 `.neo/sessions/<ID>.json`（id 仅 `[A-Za-z0-9_-]`），下次同 ID 注入历史。轮数上限为 `session.max_turns`（默认 10）。与 `neo daemon` 内存会话独立。
+
+### 3.6 终端 Markdown 与提示词评测
+
+```bash
+./neo -R "用表格对比 DAG 与 Capability Matrix 的职责"
+make test-prompts-dry
+```
+
+`-R` / `--render` 用 md4c 渲染助手回复。领域提示词评测见 [`tests/prompts/README.md`](../tests/prompts/README.md)（**不**进默认 `make test`）。
 
 ## 4. 确定性 DAG：`dag run`
 
