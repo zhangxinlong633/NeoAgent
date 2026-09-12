@@ -1,17 +1,17 @@
-# Neo
+# Neo Agent
 
 **A portable, goal-oriented agent runtime.**
 
 [中文版 README](README_zh.md)
 
-Neo accepts concrete goals (status checks, material organization, fixed operational flows) and executes them under explicit constraints. It is not positioned as an open-ended chatbot; it is built to **complete a defined class of work reliably**.
+Neo Agent accepts concrete goals (status checks, material organization, fixed operational flows) and executes them under explicit constraints. It is not positioned as an open-ended chatbot; it is built to **complete a defined class of work reliably**.
 
 ### Runtime architecture
 
-Neo runs as a closed-loop agent system: the **LLM is the decision brain** (understands the goal and generates or selects a DAG); the **DAG is the scheduler** (advances by graph, reviewable); the **Capability Matrix is the arsenal** (governed tools). Together they finish one job. **Memory** runs through the loop—auto-storing and deliberately storing valuable information, then recalling it to feed later decisions—until the business goal is met.
+Neo Agent runs as a closed-loop agent system: the **LLM is the decision brain** (understands the goal and generates or selects a DAG); the **DAG is the scheduler** (advances by graph, reviewable); the **Capability Matrix is the arsenal** (governed tools). Together they finish one job. **Memory** runs through the loop—auto-storing and deliberately storing valuable information, then recalling it to feed later decisions—until the business goal is met.
 
 <p align="center">
-  <img src="docs/neo-architecture-en.webp" alt="Neo agent closed loop: LLM decision brain, DAG scheduler, Capability Matrix arsenal, Memory" width="920" />
+  <img src="docs/neo-architecture-en.webp" alt="Neo Agent closed loop: LLM decision brain, DAG scheduler, Capability Matrix arsenal, Memory" width="920" />
 </p>
 
 | Dimension | Component | Business meaning |
@@ -30,11 +30,11 @@ Scenarios and positioning: [`docs/applications.md`](docs/applications.md). Comma
 
 ## Business extension layers
 
-Neo’s value is not “which model is smarter,” but whether a goal-oriented agent can **schedule stably, invoke from an allow-list, and control cost and data boundaries**. Layers below align with [`docs/applications.md`](docs/applications.md): deliver what works today first; treat later layers as direction and vision (not fully shipped).
+Neo Agent’s value is not “which model is smarter,” but whether a goal-oriented agent can **schedule stably, invoke from an allow-list, and control cost and data boundaries**. Layers below align with [`docs/applications.md`](docs/applications.md): deliver what works today first; treat later layers as direction and vision (not fully shipped).
 
 ### Delivered today: finish tasks, keep them reviewable
 
-| Need | How Neo addresses it |
+| Need | How Neo Agent addresses it |
 |------|----------------------|
 | Multi-step goals must complete with a clear path | Encode fetch → tidy → decide → notify/persist as a repeatable DAG |
 | Internal skills must be usable by agents and governed | Register scripts, commands, and APIs in the matrix; tasks may call only listed capabilities |
@@ -47,7 +47,7 @@ Typical uses: repo/doc sidekick, scheduled goals, SOP-style checks, and lightwei
 
 When near-data, low-latency, weak-network loops become hard requirements, the same DAG + capability matrix can extend on-site (full form is on the architecture roadmap; today mostly reserved contracts).
 
-| Direction | Picture | Neo’s role |
+| Direction | Picture | Neo Agent’s role |
 |-----------|---------|------------|
 | Industrial edge | Inspection, interlocking, anomaly handling close on the line | Schedule on industrial hosts; run registered capabilities on nodes |
 | Embodied / mobile | Patrol, service robots, onboard orchestration | Task-level scheduling and capability governance (not hard real-time motion control) |
@@ -59,7 +59,7 @@ As the architecture matures, the product may grow from “an assistant” into �
 
 ### Ecological niche
 
-Cloud LLMs supply deep cognition; **Neo is the scheduling and execution spine that plugs intelligence into real systems**—goals orchestrable, capabilities governable, boundaries enforceable, and memory retainable locally. Detail: [`docs/applications.md`](docs/applications.md) §§5–6.
+Cloud LLMs supply deep cognition; **Neo Agent is the scheduling and execution spine that plugs intelligence into real systems**—goals orchestrable, capabilities governable, boundaries enforceable, and memory retainable locally. Detail: [`docs/applications.md`](docs/applications.md) §§5–6.
 
 ---
 
@@ -70,7 +70,7 @@ Cloud LLMs supply deep cognition; **Neo is the scheduling and execution spine th
 - Users who prefer light deploy: change configuration per environment  
 - Scenarios that need **on-host autonomous memory** (cross-session preferences/facts without an external embedding service)  
 
-If the goal is “the strongest coding IDE” or a heavyweight workflow middle platform, that is outside Neo’s product direction.
+If the goal is “the strongest coding IDE” or a heavyweight workflow middle platform, that is outside Neo Agent’s product direction.
 
 ---
 
@@ -109,7 +109,7 @@ From the repository root (valid API credentials required):
 
 ```bash
 # Product positioning
-./neo "In three sentences, what goal-oriented tasks is Neo good for?"
+./neo "In three sentences, what goal-oriented tasks is Neo Agent good for?"
 
 # Run catalog DAGs
 ./neo dag run show_time
@@ -146,7 +146,7 @@ Further examples: [`docs/examples.md`](docs/examples.md). Memory and claw assemb
 
 ## Autonomous memory
 
-Neo provides **on-host autonomous memory**: preferences and facts persist across sessions, retrieval augments the prompt, and **no external embedding service is required**. When enabled, Neo can detect remember/prefer-style user intents and write them locally; the model may also call `memory_add` from the capability matrix.
+Neo Agent provides **on-host autonomous memory**: preferences and facts persist across sessions, retrieval augments the prompt, and **no external embedding service is required**. When enabled, Neo Agent can detect remember/prefer-style user intents and write them locally; the model may also call `memory_add` from the capability matrix.
 
 ### Configuration
 
