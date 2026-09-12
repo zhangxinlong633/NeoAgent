@@ -12,9 +12,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define CAP_DIR_MAX_COMMANDS 128
+/* 目录装载与 config 内联 commands 共用 tools.command_count；须 ≥ MAX_COMMANDS。 */
+#define CAP_DIR_MAX_COMMANDS 256
 #define CAP_DIR_MAX_ARGV 16
-#define CAP_DIR_MAX_ENABLED 128
+#define CAP_DIR_MAX_ENABLED 256
 
 static char *dup_s(const char *s) {
   size_t n;

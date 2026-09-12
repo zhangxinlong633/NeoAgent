@@ -2,7 +2,7 @@
   name: "unix_curl",
   description: "Transfer URLs (prefer http_get).",
   when: ["Need curl options"],
-  when_not: ["Prefer http_get", "Not in default enabled.json5; enable only after Policy review"],
+  when_not: ["Prefer http_get when host is allow-listed", "Large body dumps; prefer -I or range"],
   tags: ["unix", "net", "dangerous"],
   outcome: "Usage: curl -I https://example.com | Sample: HTTP/2 200",
   sample_usage: "curl -I https://example.com",

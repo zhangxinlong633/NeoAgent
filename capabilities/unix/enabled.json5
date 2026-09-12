@@ -35,5 +35,6 @@
     "unix_sed",
     "unix_cksum",
     "unix_uname_s",
+    "unix_curl",
   ],
 }

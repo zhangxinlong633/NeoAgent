@@ -8,7 +8,8 @@
 
 #define MAX_STR 512
 #define MAX_PATHS 32
-#define MAX_COMMANDS 128
+/* 与 capability_dir CAP_DIR_MAX_COMMANDS 对齐；unix 全量包约 127 + local/git/inline */
+#define MAX_COMMANDS 256
 #define MAX_ARGV 16
 
 static char *dup_str(const char *s) {
