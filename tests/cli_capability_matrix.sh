@@ -219,6 +219,20 @@ else
   bad "-D enters daemon (rc=$RC err=$ERR)"
 fi
 
+# Task B2: -D -S 挂载落盘会话（exit 即退出；须声明 session=）
+_out="$(mktemp)"; _err="$(mktemp)"
+set +e
+printf 'exit\n' | "$NEO" -c "$CFG" -D -S ut_cli_daemon >"$_out" 2>"$_err"
+_rc=$?
+set -e
+OUT="$(cat "$_out")"; ERR="$(cat "$_err")"; RC=$_rc
+rm -f "$_out" "$_err"
+if [[ "$RC" -eq 0 ]] && grep -q 'neo daemon: session=ut_cli_daemon' <<<"$ERR"; then
+  ok "-D -S mounts named session"
+else
+  bad "-D -S mounts named session (rc=$RC err=$ERR)"
+fi
+
 run_capture "$NEO" --not-a-real-flag
 if [[ "$RC" -ne 0 ]] && grep -q "unknown option" <<<"$ERR"; then
   ok "unknown option rejected"

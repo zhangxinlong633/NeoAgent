@@ -165,7 +165,7 @@ neo tool: read_file
 
 `-S` / `--session ID[,ID...]` 按序加载多个会话历史并注入本次请求；**本轮只写回第一个 ID**。省略 `-S` 时等价于 `-S default`。id 仅 `[A-Za-z0-9_-]`，最多 8 个、不可重复。`-N` / `--session-new` 与 `-S` 不能同用。`--session-list` 列出已有会话；`--session-clear` 仅清除单个 id。轮数上限为 `session.max_turns`（默认 10）。
 
-**与 daemon 无关**：`-S` 落盘与 `neo -D` 内存历史是两套机制；今日 `-D` **不**读写 `.neo/sessions/`（即便命令行带了 `-S` 也会被忽略）。可恢复续聊用本节；本机 REPL 用 §6。对照表见 [`manual.md`](manual.md) §4。
+**与 daemon**：无 `-S` 的 `-D` 只用内存；`./neo -D -S id` 可挂载同一套落盘文件（加载多段、写回第一个 id）。对照表见 [`manual.md`](manual.md) §4。
 
 同会话切换角色（配置顶层 `roles`，见 `config/config.json5.example`）：
 
@@ -346,21 +346,23 @@ Planner 倾向约 4 步编辑流水线（理解 → 起草 → 自检 → 终稿
 
 ## 6. 多轮会话（daemon）
 
-Daemon 历史只在**当前进程内存**里；退出即丢，**不会**写入 `-S` 会话文件。需要跨进程续聊请用 §3.5 的 `-S`，不要写 `./neo -D -S id`（今日无效）。对照：[`manual.md`](manual.md) §4。
+无 `-S`：历史只在**当前进程内存**。带 `-S`：启动加载落盘会话，每轮写回第一个 id（与 chat 相同）。对照：[`manual.md`](manual.md) §4。
 
 ### 6.1 交互式 stdin
 
 ```bash
 ./neo -D
+./neo -D -S ship
 # 等价：./neo daemon   ./neo --daemon
 ```
 
-终端下提示符为 `User>`（输入）与 `neo>`（回复，默认 Markdown 渲染）。`exit` / `quit` / EOF 结束。轮次上限见 `session.max_turns`。交互模式会打开 `IUTF8`，退格按 UTF-8 字符删除。管道输入时无提示符、输出原文。
+终端下提示符为 `User>`（挂载时为 `User[id]>`）与 `neo>`（回复，默认 Markdown 渲染）。`exit` / `quit` / EOF 结束。轮次上限见 `session.max_turns`。交互模式会打开 `IUTF8`，退格按 UTF-8 字符删除。管道输入时无提示符、输出原文；挂载时 stderr 仍有 `neo daemon: session=…`。
 
 ### 6.2 Unix socket
 
 ```bash
 ./neo daemon --socket /tmp/neo.sock
+./neo daemon -S ship --socket /tmp/neo.sock
 # 另一终端：
 echo "现在几点（UTC）？请用工具" | nc -U /tmp/neo.sock
 ```

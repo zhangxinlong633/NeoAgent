@@ -8,6 +8,7 @@
 #include "llm.h"
 #include "neo_md_term.h"
 #include "neo_memory.h"
+#include "neo_session.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -174,6 +175,53 @@ static void session_trim_to(int max_turns) {
   }
 }
 
+static void session_clear_all(void) {
+  int i;
+  for (i = 0; i < session_count; i++) {
+    free(session_messages[i].role);
+    free(session_messages[i].content);
+    session_messages[i].role = NULL;
+    session_messages[i].content = NULL;
+  }
+  session_count = 0;
+}
+
+/*
+ * 从落盘会话灌入内存缓冲。n_ids==0 则只清空。
+ * 成功返回 0；失败 -1（已清空缓冲）。
+ */
+static int session_mount_disk(char *const *ids, int n_ids, int max_turns) {
+  llm_message_t *msgs = NULL;
+  int n = 0, i;
+  session_clear_all();
+  if (!ids || n_ids < 1) return 0;
+  if (neo_session_load_many(ids, n_ids, &msgs, &n) != 0) return -1;
+  for (i = 0; i < n; i++) {
+    if (!msgs[i].role || !msgs[i].content) continue;
+    session_append(msgs[i].role, msgs[i].content);
+  }
+  neo_session_free(msgs, n);
+  session_trim_to(max_turns > 0 ? max_turns : 10);
+  return 0;
+}
+
+/* 挂载时把本轮写回 ids[0]；无挂载则 no-op。 */
+static void session_persist_turn(const char *write_id, const char *user, const char *assistant,
+                                 int max_turns) {
+  if (!write_id || !write_id[0] || !user || !assistant) return;
+  if (neo_session_append_turn(write_id, user, assistant, max_turns > 0 ? max_turns : 10) != 0)
+    fprintf(stderr, "neo daemon: failed to persist turn to session '%s'\n", write_id);
+}
+
+static void daemon_log_session_banner(char *const *ids, int n_ids) {
+  int i;
+  if (!ids || n_ids < 1) return;
+  fprintf(stderr, "neo daemon: session=%s", ids[0] ? ids[0] : "?");
+  for (i = 1; i < n_ids; i++) fprintf(stderr, ",%s", ids[i] ? ids[i] : "?");
+  if (n_ids > 1) fprintf(stderr, " (write=%s)", ids[0] ? ids[0] : "?");
+  fprintf(stderr, "\n");
+}
+
 static int do_one_turn(agent_config_t *conf, char *system_prompt, const char *user_input, llm_response_t *out) {
   if (conf->tools.enabled && getenv("NEO_DISABLE_TOOLS") == NULL) {
     llm_message_t *pmsgs = NULL;
@@ -310,16 +358,26 @@ static void daemon_print_assistant(const char *data, size_t size, int render, in
   fflush(stdout);
 }
 
-int run_daemon_stdin(agent_config_t *conf, int debug, int verbose, int render) {
+int run_daemon_stdin(agent_config_t *conf, int debug, int verbose, int render,
+                     char *const *session_ids, int n_ids) {
   char *system_prompt = malloc(SYSTEM_MAX);
   char *line_buf = malloc(LINE_MAX);
   int interactive;
+  int max_turns;
+  const char *write_id = NULL;
   if (!system_prompt || !line_buf) {
     free(system_prompt);
     free(line_buf);
     return -1;
   }
-  session_count = 0;
+  max_turns = conf && conf->session_max_turns > 0 ? conf->session_max_turns : 10;
+  if (session_mount_disk(session_ids, n_ids, max_turns) != 0) {
+    fprintf(stderr, "neo daemon: failed to load session(s)\n");
+    free(system_prompt);
+    free(line_buf);
+    return -1;
+  }
+  if (n_ids > 0 && session_ids) write_id = session_ids[0];
   interactive = daemon_stdin_interactive();
   if (interactive) {
 #if defined(__linux__) || defined(__APPLE__)
@@ -333,6 +391,7 @@ int run_daemon_stdin(agent_config_t *conf, int debug, int verbose, int render) {
   } else {
     fprintf(stderr, "neo daemon: stdin mode. Type 'exit' or 'quit' or EOF to stop.\n");
   }
+  daemon_log_session_banner(session_ids, n_ids);
   for (;;) {
     size_t len;
     llm_response_t resp = {0};
@@ -344,7 +403,10 @@ int run_daemon_stdin(agent_config_t *conf, int debug, int verbose, int render) {
       cy = use_color ? D_CYAN : "";
       bd = use_color ? D_BOLD : "";
       re = use_color ? D_RESET : "";
-      fprintf(stderr, "%s%sUser>%s ", bd, cy, re);
+      if (write_id && write_id[0])
+        fprintf(stderr, "%s%sUser[%s]>%s ", bd, cy, write_id, re);
+      else
+        fprintf(stderr, "%s%sUser>%s ", bd, cy, re);
       fflush(stderr);
     }
     if (!fgets(line_buf, LINE_MAX, stdin)) break;
@@ -364,19 +426,24 @@ int run_daemon_stdin(agent_config_t *conf, int debug, int verbose, int render) {
       daemon_print_assistant(resp.data, resp.size, render, interactive);
       session_append("user", line_buf);
       session_append("assistant", resp.data);
-      session_trim_to(conf->session_max_turns > 0 ? conf->session_max_turns : 10);
+      session_trim_to(max_turns);
+      session_persist_turn(write_id, line_buf, resp.data, max_turns);
     }
     llm_response_free(&resp);
   }
   daemon_stdin_termios_restore();
+  session_clear_all();
   free(system_prompt);
   free(line_buf);
   return 0;
 }
 
 #ifdef HAVE_UNIX_SOCKET
-int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, int verbose) {
+int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, int verbose,
+                      char *const *session_ids, int n_ids) {
   int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+  int max_turns;
+  const char *write_id = NULL;
   if (fd < 0) {
     perror("socket");
     return -1;
@@ -396,13 +463,22 @@ int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, 
     close(fd);
     return -1;
   }
+  max_turns = conf && conf->session_max_turns > 0 ? conf->session_max_turns : 10;
+  if (session_mount_disk(session_ids, n_ids, max_turns) != 0) {
+    fprintf(stderr, "neo daemon: failed to load session(s)\n");
+    close(fd);
+    return -1;
+  }
+  if (n_ids > 0 && session_ids) write_id = session_ids[0];
   fprintf(stderr, "neo daemon: listening on %s\n", socket_path);
+  daemon_log_session_banner(session_ids, n_ids);
 
   char *system_prompt = malloc(SYSTEM_MAX);
   char *line_buf = malloc(LINE_MAX);
   if (!system_prompt || !line_buf) {
     free(system_prompt);
     free(line_buf);
+    session_clear_all();
     close(fd);
     return -1;
   }
@@ -429,7 +505,8 @@ int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, 
         if (resp.size > 0 && resp.data[resp.size - 1] != '\n') write(client, "\n", 1);
         session_append("user", line_buf);
         session_append("assistant", resp.data);
-        session_trim_to(conf->session_max_turns > 0 ? conf->session_max_turns : 10);
+        session_trim_to(max_turns);
+        session_persist_turn(write_id, line_buf, resp.data, max_turns);
       }
       llm_response_free(&resp);
     }
@@ -437,15 +514,19 @@ int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, 
   }
   free(system_prompt);
   free(line_buf);
+  session_clear_all();
   close(fd);
   return 0;
 }
 #else
-int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, int verbose) {
+int run_daemon_socket(agent_config_t *conf, const char *socket_path, int debug, int verbose,
+                      char *const *session_ids, int n_ids) {
   (void)conf;
   (void)socket_path;
   (void)debug;
   (void)verbose;
+  (void)session_ids;
+  (void)n_ids;
   fprintf(stderr, "neo: Unix socket not supported on this platform\n");
   return -1;
 }

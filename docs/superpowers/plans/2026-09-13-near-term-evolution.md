@@ -77,12 +77,12 @@
 
 **Files:** `src/core/daemon.c`、`src/cli/main.c`、`src/core/neo_session.*`
 
-- [ ] CLI：`neo -D -S id` 或 `neo daemon -S id`：启动时 `neo_session_load` 注入内存历史；每轮结束后 `neo_session_append_turn` 写回（与 chat 同 max_turns）
-- [ ] 无 `-S`：保持今日纯内存行为
-- [ ] `-S a,b`：与 chat 一致（加载多段、只写第一个）；若过复杂可 v1 仅支持单 id
-- [ ] 交互提示符旁可显示 session id（stderr）
-- [ ] CLI 冒烟：`printf 'exit\n' | ./neo -D -S ...` 不炸；有写入则检查 json
-- [ ] 更新手册；Commit
+- [x] CLI：`neo -D -S id` 或 `neo daemon -S id`：启动时 `neo_session_load` 注入内存历史；每轮结束后 `neo_session_append_turn` 写回（与 chat 同 max_turns）
+- [x] 无 `-S`：保持今日纯内存行为
+- [x] `-S a,b`：与 chat 一致（加载多段、只写第一个）；若过复杂可 v1 仅支持单 id
+- [x] 交互提示符旁可显示 session id（stderr）
+- [x] CLI 冒烟：`printf 'exit\n' | ./neo -D -S ...` 不炸；有写入则检查 json
+- [x] 更新手册；Commit
 
 ---
 

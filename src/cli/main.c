@@ -76,7 +76,8 @@ static void print_usage(const char *prog) {
   fprintf(stderr, "  -v, --verbose       Step / capability / memory summaries on stderr\n");
   fprintf(stderr, "  -R, --render        Render assistant Markdown (default: on)\n");
   fprintf(stderr, "  --no-render         Print raw Markdown / plain text (disable render)\n");
-  fprintf(stderr, "  -S, --session ID[,ID...]  Session id(s); default is \"%s\" if omitted\n",
+  fprintf(stderr, "  -S, --session ID[,ID...]  Chat: session id(s), default \"%s\"; "
+          "daemon (-D): optional mount (load many, write first; no default)\n",
           NEO_SESSION_DEFAULT_ID);
   fprintf(stderr, "  -N, --session-new   Archive default session to YYYYMMDD-HHMMSS, then chat fresh\n");
   fprintf(stderr, "  --session-list      List saved sessions under .neo/sessions/ and exit\n");
@@ -599,9 +600,28 @@ int main(int argc, char **argv) {
 
   if (daemon_mode) {
     agent_config_t conf;
+    char **d_ids = NULL;
+    int d_n = 0;
+    int r;
+    if (session_new) {
+      fprintf(stderr, "neo: -N/--session-new cannot combine with daemon\n");
+      return 1;
+    }
+    if (session_list || session_clear) {
+      fprintf(stderr, "neo: --session-list/--session-clear cannot combine with daemon\n");
+      return 1;
+    }
+    if (session_spec) {
+      if (neo_session_parse_ids(session_spec, &d_ids, &d_n) != 0) {
+        fprintf(stderr, "neo: invalid -S/--session for daemon "
+                "(ids: [A-Za-z0-9_-], comma-separated, max 8, no duplicates)\n");
+        return 1;
+      }
+    }
     config_init(&conf);
     if (config_load_file(&conf, config_path) != 0) {
       fprintf(stderr, "neo: failed to load config from %s\n", config_path);
+      neo_session_free_ids(d_ids, d_n);
       config_free(&conf);
       return 1;
     }
@@ -611,8 +631,9 @@ int main(int argc, char **argv) {
       conf.model.name = malloc(strlen(model_override) + 1);
       if (conf.model.name) strcpy(conf.model.name, model_override);
     }
-    int r = socket_path ? run_daemon_socket(&conf, socket_path, debug, verbose)
-                        : run_daemon_stdin(&conf, debug, verbose, render);
+    r = socket_path ? run_daemon_socket(&conf, socket_path, debug, verbose, d_ids, d_n)
+                    : run_daemon_stdin(&conf, debug, verbose, render, d_ids, d_n);
+    neo_session_free_ids(d_ids, d_n);
     config_free(&conf);
     return r != 0;
   }

@@ -38,4 +38,4 @@
 
 落盘目录：`.neo/sessions/<id>.json`。轮数上限见配置 `session.max_turns`（默认 10）。
 
-这与 `neo -D`（daemon）**无关**：daemon 只用内存，不读写上述文件。对照见 [`daemon.md`](daemon.md) 与 [`docs/manual.md`](../../docs/manual.md) §4。
+同一文件也可被 `./neo -D -S <id>` 挂载（启动加载、每轮写回）。纯内存 daemon 见 [`daemon.md`](daemon.md)；对照 [`docs/manual.md`](../../docs/manual.md) §4。

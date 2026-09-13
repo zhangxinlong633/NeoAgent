@@ -88,22 +88,23 @@ cp config/config.json5.example config/config.json5
 
 ## 4. 对话与会话
 
-Neo 有两套**彼此独立**的多轮机制，不要混用或假设它们共享历史。
+Neo 有两套多轮机制。**默认彼此独立**；可选在 daemon 上挂载 `-S` 落盘会话（见下表与 §4.5）。
 
-| | 具名会话 `-S` | Daemon `-D` |
-|--|--------------|-------------|
-| 入口 | `./neo [-S id] "…"`（省略 `-S` ≡ `-S default`） | `./neo -D` / `daemon` / `--socket` |
-| 存储 | 落盘 `.neo/sessions/<id>.json` | **仅进程内存**；退出即丢 |
-| 跨进程续聊 | 可以 | 不可以 |
-| 与对方关系 | 不读写 daemon 内存 | **今日不读写 `-S` 文件**（传了 `-S` 也会被忽略） |
-| 轮次上限 | `session.max_turns`（默认 10） | 同左（内存 trim） |
-| 典型场景 | 隔天续聊、脚本多次调用、多会话混合 | 本机交互 REPL、管道/socket 一发多轮 |
+| | 具名会话 `-S`（chat） | Daemon `-D`（无 `-S`） | Daemon `-D -S id` |
+|--|---------------------|------------------------|-------------------|
+| 入口 | `./neo [-S id] "…"`（省略 ≡ `-S default`） | `./neo -D` | `./neo -D -S id`（或 `-S a,b`） |
+| 存储 | 落盘 `.neo/sessions/<id>.json` | **仅进程内存**；退出即丢 | 启动灌入内存；每轮写回 **第一个** id |
+| 跨进程续聊 | 可以 | 不可以 | 可以（经落盘文件） |
+| 轮次上限 | `session.max_turns`（默认 10） | 同左（内存 trim） | 同左（内存 + 落盘 trim） |
+| 典型场景 | 隔天续聊、脚本多次调用 | 本机 REPL、不关心落盘 | 交互 REPL **且**要可恢复 |
 
 **推荐路径**
 
-1. **要可恢复的多轮** → 用 `-S`（或默认 `default`），不要依赖 daemon。
-2. **只要当前终端里连续聊、不在乎落盘** → 用 `-D`。
-3. **不要**写成 `./neo -D -S ship …` 并期望写回 `ship`：今日无效。可选挂载（`-D -S id`）属计划中的 Task B2，落地前以本节为准。
+1. **脚本 / 非交互可恢复多轮** → `./neo -S id "…"`（或默认 `default`）。
+2. **本机 REPL、不在乎落盘** → `./neo -D`。
+3. **本机 REPL 且要写回落盘** → `./neo -D -S id`（多 id 时与 chat 相同：按序加载，只写第一个）。
+
+`-N` / `--session-list` / `--session-clear` 不能与 daemon 同用。
 
 ### 4.1 单次与续聊
 
@@ -153,12 +154,13 @@ roles: {
 ```bash
 ./neo daemon
 ./neo -D                    # 同 daemon（注意：-d 是 debug）
+./neo -D -S ship            # 挂载落盘会话 ship：启动加载，每轮写回
+./neo -D -S a,b             # 按序注入 a+b 历史，只写回 a
 ./neo --daemon --socket /tmp/neo.sock
+./neo --daemon -S ship --socket /tmp/neo.sock
 ```
 
-**仅内存轮次**，与 §4 表中 `-S` 落盘独立；进程结束历史消失。交互式终端下会显示 `User>`（你输入）与 `neo>`（助手回复），并对回复做 Markdown 渲染（`--no-render` 可关）。管道 / `--socket` 仍为无前缀原文，方便脚本。交互输入会打开终端 `IUTF8`，退格按 UTF-8 字符删除（而非按字节）。
-
-需要落盘续聊时请用 §4.1–4.3 的 `-S`，不要假设 daemon 会写入 `.neo/sessions/`。
+无 `-S` 时**仅内存轮次**，进程结束历史消失。带 `-S` 时 stderr 会打印 `neo daemon: session=…`；交互提示符为 `User[id]>`。管道 / `--socket` 仍为无前缀原文。交互输入会打开终端 `IUTF8`，退格按 UTF-8 字符删除（而非按字节）。
 
 ---
 
