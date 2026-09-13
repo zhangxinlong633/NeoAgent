@@ -129,16 +129,16 @@
 
 **Files:** `capabilities/unix/`（如 `enabled.json5` + `enabled.readonly.json5.example`）
 
-- [ ] 提供「只读诊断」「含 curl」「全量（不推荐）」三份样例或文档表
-- [ ] README 指向命令数上限 256 与危险命令清单
-- [ ] Commit
+- [x] 提供「只读诊断」「含 curl」「全量（不推荐）」三份样例或文档表
+- [x] README 指向命令数上限 256 与危险命令清单
+- [x] Commit
 
 ### Task E2: architecture §8 路径对齐
 
 **Files:** `docs/architecture.md`
 
-- [ ] 对照表改为现行 `dag.c` / 模块路径；去掉过时 `workflow.c` 等
-- [ ] Commit
+- [x] 对照表改为现行 `dag.c` / 模块路径；去掉过时 `workflow.c` 等
+- [x] Commit
 
 ---
 

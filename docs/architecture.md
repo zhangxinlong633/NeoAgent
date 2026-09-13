@@ -61,7 +61,7 @@ Neo 的逻辑内核划分为两层：**调度层（Scheduler）** 与 **执行�
 
 | 架构层 | 产品三角对应 | 本仓库主要实现入口 |
 |--------|--------------|--------------------|
-| 调度层 | DAG（拓扑、依赖、分支与跳过） | `src/dag/workflow.c`；`neo dag run`、`neo plan`、`neo run` |
+| 调度层 | DAG（拓扑、依赖、分支与跳过） | `src/dag/dag.c`、`dag_dir.c`；`neo dag run`、`neo plan`、`neo run` |
 | 执行层 | Capability Matrix 与 Policy | `src/capability/*`；配置键 `capability_matrix`；目录 `capabilities/` |
 | 规划层（可选） | 自然语言至 DAG 的转化 | `src/dag/plan.c`；可省略，直接提交 dags |
 
@@ -142,7 +142,7 @@ Neo 的逻辑内核划分为两层：**调度层（Scheduler）** 与 **执行�
 
 #### 2.3.3 现行实现说明
 
-现行 workflow 通过 `neo_dispatch_tool` 及大语言模型步骤获得文本输出，并借助 `{{steps.<id>}}`、`{{prev}}` 注入后续步骤。上列结构化状态信封属于演进目标，尚未成为运行时强制协议。
+现行 DAG 通过 `neo_dispatch_tool` 及大语言模型步骤获得文本输出，并借助 `{{steps.<id>}}`、`{{prev}}` 注入后续步骤。上列结构化状态信封属于演进目标，尚未成为运行时强制协议。
 
 ### 2.4 分层依据
 
@@ -161,7 +161,7 @@ Neo 的逻辑内核划分为两层：**调度层（Scheduler）** 与 **执行�
 
 ### 3.1 DAG 工作流规范
 
-DAG 为调度层认可的标准编排输入。目标元素集合如下；本仓库以 JSON5 形式的 workflow 对象落地。
+DAG 为调度层认可的标准编排输入。目标元素集合如下；本仓库以 JSON5 形式的 DAG 对象落地。
 
 | 元素 | 规范说明 | 成熟度 |
 |------|----------|--------|
@@ -280,7 +280,7 @@ DAG 为调度层认可的标准编排输入。目标元素集合如下；本仓�
 | 快照内容 | 已完成节点输出、节点状态、变量上下文、活跃节点集合 |
 | 恢复粒度 | 以节点为最小恢复单位 |
 
-**现行实现**：workflow 在单一进程生命周期内执行，不具备跨进程检查点。
+**现行实现**：DAG 在单一进程生命周期内执行，不具备跨进程检查点。
 
 ---
 
@@ -410,13 +410,16 @@ DAG 为调度层认可的标准编排输入。目标元素集合如下；本仓�
 
 | 愿景概念 | 本仓库落点 | 成熟度 |
 |----------|------------|--------|
-| 调度层 | `src/dag/workflow.c` | 本机 DAG、循环与路由 |
-| 执行层 | `src/capability/*` | 矩阵、分发与 MCP stdio 装载 |
-| 能力目录 | `capabilities/` | 已实现 |
-| DAG 目录 | `dags/` | 已实现（含 `workspace_brief` 等 SOP） |
-| 规划层 | `src/dag/plan.c` | 已实现（可选；catalog `use` + 现编） |
+| 调度层 | `src/dag/dag.c`、`dag_dir.c` | 本机 DAG、循环与路由、requires 预检 |
+| 执行层 | `src/capability/capability_matrix.c`、`agent_tools.c`、`command_tools.c`、`mcp_stdio.c` | 矩阵、分发与 MCP stdio 装载 |
+| 能力目录 | `capabilities/`、`capability_dir.c` | 已实现 |
+| DAG 目录 | `dags/`、`dag_dir.c` | 已实现（含 `workspace_brief` 等 SOP） |
+| 规划层 | `src/dag/plan.c` | 已实现（可选；catalog `use` + 现编；`catalog_only`） |
+| 会话 | `src/core/neo_session.c`、`daemon.c` | 落盘 `-S`；daemon 可选挂载 |
+| 可观测 | `src/core/neo_events.c` | 可选 `NEO_EVENTS` JSONL |
 | claw | `rules/` 以及 soul、bootstrap、memory | Skills 已废止 |
-| HTTPS | `neo_http` + vendored BearHttpsClient | 已实现（系统 DNS + known_ips） |
+| 配置 | `src/core/config.c` | JSON5；顶层 `capability_matrix` |
+| HTTPS | `src/core/neo_http.c` + vendored BearHttpsClient | 已实现（系统 DNS + known_ips） |
 | 层间结构化信封 | — | 路线图（现行为文本步骤输出） |
 | 计算漂移与位置决策 | — | 未实现（远期） |
 | 多态变体与服务质量标签 | — | 未实现（远期） |
@@ -433,7 +436,7 @@ DAG 为调度层认可的标准编排输入。目标元素集合如下；本仓�
 |------|------|------|
 | 步骤可观测 | 已具备 | `-v` 打印 `type` / `tool` / `tools=on\|off`；失败时即使无 `-v` 也打印 `status=fail` |
 | Catalog SOP | 已具备 | 如 `show_time`、`repo_pulse`、`workspace_brief`（取数→整理→落盘） |
-| 规划选型稳健 | 部分 | `use` 误写能力名可降级为 ad-hoc tool 图；混用/未知名失败可读 |
+| 规划选型稳健 | 部分→增强 | 未知 `use` 可解释 + catalog hint；`requires` 预检；可选 `plan.catalog_only` |
 | 本地优先约定 | 文档约定 | DAG 中 `type:tool` 走矩阵本地能力，`type:llm` 才调远端模型；完整计算漂移仍为远期 |
 | 多路 route / tool retry | 已具备 | `route.cases` 有序多臂；`retry.max` 仅 tool、0..3；仍无 LLM `decide` |
 | tool 失败 LLM 热线 | 已具备（默认关） | `dag.on_tool_fail.llm`：本地 retry 耗尽后问 RETRY/ABORT；不改 args、不跳步 |
