@@ -1,0 +1,12 @@
+{
+  name: "blender_export_glb",
+  description: "调用本机 Blender 生成网格并导出 GLB。",
+  when: ["导出 GLB", "glTF 样例资产"],
+  when_not: ["已有工程只导出", "生产级材质管线"],
+  tags: ["blender", "glb", "gltf", "export", "demo"],
+  requires: ["blender_export_glb"],
+  outcome: ".neo/blender_export_glb/product.glb",
+  steps: [
+    { id: "export", type: "tool", tool: "blender_export_glb", args: {} },
+  ],
+}

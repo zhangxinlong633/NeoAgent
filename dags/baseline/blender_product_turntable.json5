@@ -1,0 +1,12 @@
+{
+  name: "blender_product_turntable",
+  description: "调用本机 Blender 渲染转盘上的简易产品静帧。",
+  when: ["产品转盘", "turntable 静帧", "电商台展示单帧"],
+  when_not: ["转盘动画视频", "复杂产品替换网格"],
+  tags: ["blender", "turntable", "product", "demo"],
+  requires: ["blender_product_turntable"],
+  outcome: ".neo/blender_product_turntable/turntable.png",
+  steps: [
+    { id: "draw", type: "tool", tool: "blender_product_turntable", args: {} },
+  ],
+}

@@ -9,5 +9,7 @@
 | `blender_showcase.json5` | `blender_showcase` | `blender_showcase` → 本机 Blender 渲染展示静帧（需已安装 Blender） |
 | `blender_cup.json5` | `blender_cup` | `blender_cup` → 本机 Blender 画简单杯子并渲染 |
 | `blender_watermelon.json5` | `blender_watermelon` | `blender_watermelon` → 本机 Blender 画西瓜并渲染 |
+| `blender_product_turntable.json5` | `blender_product_turntable` | `blender_product_turntable` → 转盘产品静帧 |
+| `blender_export_glb.json5` | `blender_export_glb` | `blender_export_glb` → 导出 GLB 样例 |
 
 依赖能力须已在矩阵中（`date_iso` 来自 `capabilities/local/`；git 能力来自 `capabilities/git/`；Blender 演示能力来自 `capabilities/local/`，需本机安装 Blender）。本目录无子目录。

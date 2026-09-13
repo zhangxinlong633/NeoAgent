@@ -12,5 +12,7 @@
 | `blender_showcase.json5` | `blender_showcase` | 本机 Blender 后台渲染展示静帧（金属环+玻璃球）；脚本见同目录 `blender_showcase.py` |
 | `blender_cup.json5` | `blender_cup` | 本机 Blender 画简单陶瓷杯并渲染；脚本见 `blender_cup.py` |
 | `blender_watermelon.json5` | `blender_watermelon` | 本机 Blender 画西瓜并渲染；脚本见 `blender_watermelon.py` |
+| `blender_product_turntable.json5` | `blender_product_turntable` | 转盘上的简易产品静帧；脚本见 `blender_product_turntable.py` |
+| `blender_export_glb.json5` | `blender_export_glb` | 生成网格并导出 GLB（附预览图）；脚本见 `blender_export_glb.py` |
 
 本目录无子目录。选型元数据见 [`AGENTS.md`](../../AGENTS.md) §4.1。

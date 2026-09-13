@@ -1,0 +1,24 @@
+{
+  name: "blender_export_glb",
+  description: "用本机 Blender 后台生成简易网格并导出 GLB（附预览 PNG 与 .blend）。",
+  when: [
+    "需要导出 glTF/GLB 给 Web/引擎试看",
+    "从 Neo 拉一个可交换的 3D 资产样例",
+  ],
+  when_not: [
+    "已有复杂场景只要导出（应打开工程或 MCP）",
+    "需要 Draco/自定义材质管线的生产导出",
+  ],
+  tags: ["blender", "3d", "gltf", "glb", "export", "demo"],
+  outcome: "写出 .neo/blender_export_glb/product.glb、preview.png、product.blend；stdout 打印路径",
+  argv: ["./scripts/tools/blender_export_glb.sh"],
+  parameters: {
+    type: "object",
+    properties: {
+      out: { type: "string", description: "输出目录，默认 .neo/blender_export_glb" },
+    },
+  },
+  timeout_sec: 180,
+  max_output_bytes: 16384,
+  pass_args: "stdin_json",
+}

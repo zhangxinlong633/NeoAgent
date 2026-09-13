@@ -106,11 +106,11 @@
 
 **Files:** `capabilities/local/`、`dags/baseline/`、`scripts/tools/`
 
-- [ ] 盘点已有：`blender_showcase` / `blender_cup` / `blender_watermelon`
-- [ ] 新增 1～2 个高信号套餐（择需）：例如 `blender_product_turntable`（转盘静帧）或 `blender_export_glb`（导出）
-- [ ] 每个能力：`when` / `when_not` / `outcome` 齐全；DAG `requires` 对齐
-- [ ] README 目录表更新；本机有 Blender 时 `neo dag run ...` 出图
-- [ ] Commit
+- [x] 盘点已有：`blender_showcase` / `blender_cup` / `blender_watermelon`
+- [x] 新增 1～2 个高信号套餐（择需）：例如 `blender_product_turntable`（转盘静帧）或 `blender_export_glb`（导出）
+- [x] 每个能力：`when` / `when_not` / `outcome` 齐全；DAG `requires` 对齐
+- [x] README 目录表更新；本机有 Blender 时 `neo dag run ...` 出图
+- [x] Commit
 
 ### Task D2: Blender MCP 接入样例（可选，不默认开）
 

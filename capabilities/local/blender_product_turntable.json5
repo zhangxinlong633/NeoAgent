@@ -1,0 +1,26 @@
+{
+  name: "blender_product_turntable",
+  description: "用本机 Blender 后台生成转盘上的简易产品静帧（转盘底座 + 瓶状产品 + 三点光）。",
+  when: [
+    "产品转盘 / turntable 静帧演示",
+    "电商产品台展示意图（单帧，非动画）",
+    "让 Blender 画一个放在转盘上的产品",
+  ],
+  when_not: [
+    "需要多角度动画成片或视频导出",
+    "高精度 CAD/扫描网格替换",
+    "交互式编辑已打开的 Blender 工程（请用 MCP）",
+  ],
+  tags: ["blender", "3d", "turntable", "product", "demo"],
+  outcome: "写出 .neo/blender_product_turntable/turntable.png 与 turntable.blend；stdout 打印路径",
+  argv: ["./scripts/tools/blender_product_turntable.sh"],
+  parameters: {
+    type: "object",
+    properties: {
+      out: { type: "string", description: "输出目录，默认 .neo/blender_product_turntable" },
+    },
+  },
+  timeout_sec: 180,
+  max_output_bytes: 16384,
+  pass_args: "stdin_json",
+}
