@@ -19,11 +19,12 @@
 
 | 日期 | 文件 | 摘要 |
 |------|------|------|
+| 2026-09-13 | [`2026-09-13.md`](2026-09-13.md) | 近端 A–E 收尾：plan/会话/事件/Blender/卫生；下一轮偏 DAG 深度与事件产品化 |
 | 2026-09-12 | [`2026-09-12.md`](2026-09-12.md) | 三角已立住；编排中等；愿景早期；建议收紧 plan、统一会话叙事 |
 
-**最新：** [`2026-09-12.md`](2026-09-12.md)
+**最新：** [`2026-09-13.md`](2026-09-13.md)
 
-近端落地步骤见 [`../superpowers/plans/2026-09-13-near-term-evolution.md`](../superpowers/plans/2026-09-13-near-term-evolution.md)。
+已完成的近端落地见 [`../superpowers/plans/2026-09-13-near-term-evolution.md`](../superpowers/plans/2026-09-13-near-term-evolution.md)。
 
 ## 建议结构（新篇模板）
 
