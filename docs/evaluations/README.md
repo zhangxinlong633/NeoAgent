@@ -23,6 +23,8 @@
 
 **最新：** [`2026-09-12.md`](2026-09-12.md)
 
+近端落地步骤见 [`../superpowers/plans/2026-09-13-near-term-evolution.md`](../superpowers/plans/2026-09-13-near-term-evolution.md)。
+
 ## 建议结构（新篇模板）
 
 新文件可沿用下列章节，便于纵向对比：
