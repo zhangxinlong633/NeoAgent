@@ -111,6 +111,69 @@ int main(void) {
   unlink("tests/fixtures/flaky.flag");
 
   config_free(&c);
+
+  /* 步级 timeout_sec=1 + retry.max=1：两次墙钟超时后失败 */
+  {
+    agent_config_t tc;
+    char *tout = NULL;
+    FILE *errf;
+    char errpath[] = "/tmp/neo-dag-timeout-err-XXXXXX";
+    int efd;
+    char ebuf[4096];
+    size_t en;
+    int saved_err;
+    config_init(&tc);
+    if (config_load_file(&tc, "tests/fixtures/dag_timeout.json5") != 0) {
+      fprintf(stderr, "dag_timeout load failed\n");
+      return 1;
+    }
+    if (!config_find_dag(&tc, "tool_timeout") ||
+        config_find_dag(&tc, "tool_timeout")->steps[0].timeout_sec != 1) {
+      fprintf(stderr, "dag_timeout parse timeout_sec bad\n");
+      config_free(&tc);
+      return 1;
+    }
+    efd = mkstemp(errpath);
+    if (efd < 0) {
+      perror("mkstemp");
+      config_free(&tc);
+      return 1;
+    }
+    close(efd);
+    unlink(errpath);
+    errf = fopen(errpath, "w+");
+    if (!errf) {
+      config_free(&tc);
+      return 1;
+    }
+    saved_err = dup(2);
+    dup2(fileno(errf), 2);
+    if (dag_run(&tc, "tool_timeout", &tout, 0) == 0) {
+      dup2(saved_err, 2);
+      close(saved_err);
+      fclose(errf);
+      unlink(errpath);
+      fprintf(stderr, "tool_timeout should fail\n");
+      free(tout);
+      config_free(&tc);
+      return 1;
+    }
+    fflush(stderr);
+    dup2(saved_err, 2);
+    close(saved_err);
+    rewind(errf);
+    en = fread(ebuf, 1, sizeof(ebuf) - 1, errf);
+    ebuf[en] = '\0';
+    fclose(errf);
+    unlink(errpath);
+    free(tout);
+    config_free(&tc);
+    if (!strstr(ebuf, "ERROR: timeout") || !strstr(ebuf, "retry attempt")) {
+      fprintf(stderr, "tool_timeout stderr missing timeout/retry:\n%s\n", ebuf);
+      return 1;
+    }
+  }
+
   printf("ok\n");
   return 0;
 }

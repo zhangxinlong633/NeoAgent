@@ -266,6 +266,16 @@ static int validate_dags(agent_config_t *c) {
                 wf->name, s->id);
         return -1;
       }
+      if (s->timeout_sec != 0 && s->type != DAG_STEP_TOOL) {
+        fprintf(stderr, "neo: DAG '%s' step '%s': timeout_sec only allowed on type tool\n",
+                wf->name, s->id);
+        return -1;
+      }
+      if (s->timeout_sec < 0 || s->timeout_sec > 600) {
+        fprintf(stderr, "neo: DAG '%s' step '%s': timeout_sec out of range 0..600\n",
+                wf->name, s->id);
+        return -1;
+      }
     }
   }
   return 0;
@@ -1022,6 +1032,14 @@ int config_append_dag_val(agent_config_t *c, yyjson_val *wobj, const char *err_c
         if (m < 0) m = 0;
         if (m > 3) m = 3;
         s->retry_max = m;
+      }
+    }
+    {
+      yyjson_val *to = yyjson_obj_get(st, "timeout_sec");
+      if (yyjson_is_int(to) || yyjson_is_uint(to)) {
+        int t = (int)yyjson_get_sint(to);
+        if (t < 0) t = 0;
+        s->timeout_sec = t;
       }
     }
     wf->step_count++;

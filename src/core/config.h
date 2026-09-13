@@ -141,6 +141,7 @@ typedef struct {
   dag_route_case_t *route_cases;
   int route_case_count;
   int retry_max; /* 仅 tool：首次失败后的额外尝试次数，0..3 */
+  int timeout_sec; /* 仅 tool：0=不覆盖矩阵；1..600 覆盖本次墙钟 */
 } dag_step_t;
 
 typedef struct {

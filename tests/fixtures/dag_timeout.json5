@@ -1,0 +1,36 @@
+{
+  "model": {
+    "base_url": "http://127.0.0.1:9",
+    "name": "test",
+    "api_key": "x"
+  },
+  "capability_matrix": {
+    "enabled": true,
+    "root": ".",
+    "commands": [
+      {
+        "name": "sleep_n",
+        "description": "Sleep then ok",
+        "argv": ["./tests/fixtures/bin/sleep_n.sh"],
+        "timeout_sec": 30,
+        "max_output_bytes": 4096,
+        "pass_args": "stdin_json"
+      }
+    ]
+  },
+  "dags": [
+    {
+      "name": "tool_timeout",
+      "steps": [
+        {
+          "id": "t",
+          "type": "tool",
+          "tool": "sleep_n",
+          "timeout_sec": 1,
+          "retry": { "max": 1 },
+          "args": {}
+        }
+      ]
+    }
+  ]
+}
