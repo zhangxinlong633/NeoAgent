@@ -1,6 +1,6 @@
 # DAG tool timeout + events v1 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** DAG `type:tool` 可选 `timeout_sec`（超时进现有 retry）；`NEO_EVENTS` JSONL 增加 `v` 与 `run_id`；文档对齐。
 
@@ -48,7 +48,7 @@
 - Consumes: 现有 `neo_events_emit` / `neo_events_enabled`
 - Produces: 每行含 `"v":1` 与 `"run_id":"<hex>"`；同进程多次 emit 的 `run_id` 相同
 
-- [ ] **Step 1: 扩展失败断言（先改测试）**
+- [x] **Step 1: 扩展失败断言（先改测试）**
 
 在 `tests/test_neo_events.c` 的 payload 检查中增加：
 
@@ -84,7 +84,7 @@
   }
 ```
 
-- [ ] **Step 2: 跑测确认失败**
+- [x] **Step 2: 跑测确认失败**
 
 ```bash
 make tests/test_neo_events && ./tests/test_neo_events
@@ -92,7 +92,7 @@ make tests/test_neo_events && ./tests/test_neo_events
 
 Expected: FAIL（缺 `v` / `run_id`）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 `neo_events.h` 注释更新为含 `v`、`run_id`。
 
@@ -127,7 +127,7 @@ static void ensure_run_id(void) {
 
 中文注释：说明 `run_id` 进程内懒生成、不持久化。
 
-- [ ] **Step 4: 跑测通过**
+- [x] **Step 4: 跑测通过**
 
 ```bash
 make tests/test_neo_events && ./tests/test_neo_events
@@ -135,7 +135,7 @@ make tests/test_neo_events && ./tests/test_neo_events
 
 Expected: `ok`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/neo_events.c src/core/neo_events.h tests/test_neo_events.c
@@ -162,7 +162,7 @@ EOF
 - Consumes: 现有 `tool_command_t.timeout_sec`
 - Produces: `command_tool_run(..., int timeout_override_sec)`；`>0` 覆盖本次墙钟
 
-- [ ] **Step 1: 慢命令 fixture**
+- [x] **Step 1: 慢命令 fixture**
 
 `tests/fixtures/bin/sleep_n.sh`：
 
@@ -177,7 +177,7 @@ echo "slept_ok"
 chmod +x tests/fixtures/bin/sleep_n.sh
 ```
 
-- [ ] **Step 2: 失败测试 — override=1 应对 sleep 5 超时**
+- [x] **Step 2: 失败测试 — override=1 应对 sleep 5 超时**
 
 在 `tests/test_command_exec.c` 末尾 `printf("ok\n")` 前增加：
 
@@ -210,7 +210,7 @@ chmod +x tests/fixtures/bin/sleep_n.sh
 
 （若签名尚未改，先改头文件再编译。）
 
-- [ ] **Step 3: 改签名与实现**
+- [x] **Step 3: 改签名与实现**
 
 `command_tools.h`：
 
@@ -232,7 +232,7 @@ int command_tool_run(const agent_config_t *conf, const char *root_real, const to
 
 把文件内其它 `command_tool_run(...)` 调用（仅测试与 agent_tools，Task 3 改）暂时能编过：本 task 先修 `test_command_exec` 旧调用为末参 `0`。
 
-- [ ] **Step 4: 跑测**
+- [x] **Step 4: 跑测**
 
 ```bash
 make tests/test_command_exec && ./tests/test_command_exec
@@ -240,7 +240,7 @@ make tests/test_command_exec && ./tests/test_command_exec
 
 Expected: `ok`（约 ≥1s，因超时等待）
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/capability/command_tools.h src/capability/command_tools.c \
@@ -266,7 +266,7 @@ EOF
 - Consumes: Task 2 的 `command_tool_run(..., override)`
 - Produces: `neo_dispatch_tool(..., int timeout_override_sec)`；loop 内传 `0`
 
-- [ ] **Step 1: 改头文件与 `run_one_tool`**
+- [x] **Step 1: 改头文件与 `run_one_tool`**
 
 ```c
 int neo_dispatch_tool(const agent_config_t *conf, const char *root_real,
@@ -287,7 +287,7 @@ int neo_dispatch_tool(const agent_config_t *conf, const char *root_real,
 
 agent loop 内直接调 `run_one_tool` 处传 `0`。
 
-- [ ] **Step 2: 全局补调用方**
+- [x] **Step 2: 全局补调用方**
 
 ```bash
 rg -n 'neo_dispatch_tool\(|command_tool_run\(' src tests
@@ -295,7 +295,7 @@ rg -n 'neo_dispatch_tool\(|command_tool_run\(' src tests
 
 凡签名不匹配处补 `0`（或最终的 `st->timeout_sec`）。
 
-- [ ] **Step 3: 编译测试**
+- [x] **Step 3: 编译测试**
 
 ```bash
 make test
@@ -303,7 +303,7 @@ make test
 
 Expected: 全部通过（行为与改签名前一致）
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/capability/agent_tools.h src/capability/agent_tools.c src/dag/dag.c \
@@ -330,7 +330,7 @@ EOF
 - Consumes: Task 3 签名；`dag_step_t.timeout_sec`
 - Produces: 合法 1..600；非 tool 报错；DAG 调用 `neo_dispatch_tool(..., st->timeout_sec)`
 
-- [ ] **Step 1: `dag_step_t` 字段**
+- [x] **Step 1: `dag_step_t` 字段**
 
 `config.h` 在 `retry_max` 旁：
 
@@ -339,7 +339,7 @@ EOF
   int timeout_sec; /* 仅 tool：0=不覆盖矩阵；1..600 覆盖本次 */
 ```
 
-- [ ] **Step 2: 解析与校验**
+- [x] **Step 2: 解析与校验**
 
 在 `config.c` 解析 `retry` 之后：
 
@@ -372,7 +372,7 @@ EOF
 
 若 `timeout_sec` 为 0 跳过范围错误；若 >600 失败。Spec：缺省/0 不覆盖；非法 >600 失败。若输入 `timeout_sec: 0` 显式，保持 0。
 
-- [ ] **Step 3: DAG 调用**
+- [x] **Step 3: DAG 调用**
 
 `dag_run_tool_step` 两处 `neo_dispatch_tool`：
 
@@ -381,7 +381,7 @@ EOF
                           st->timeout_sec) != 0) {
 ```
 
-- [ ] **Step 4: fixture 图**
+- [x] **Step 4: fixture 图**
 
 在 `dag_runner.json5` 的 `commands` 增加：
 
@@ -439,7 +439,7 @@ EOF
 
 参考现有 `test_dag_runner.c` 的加载/运行模式编写断言。
 
-- [ ] **Step 5: `make test`**
+- [x] **Step 5: `make test`**
 
 ```bash
 make test
@@ -447,7 +447,7 @@ make test
 
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/core/config.h src/core/config.c src/dag/dag.c \
@@ -470,7 +470,7 @@ EOF
 - Modify: `docs/architecture.md` §8.1（一行）
 - Modify: `docs/superpowers/plans/README.md`（指向本计划）
 
-- [ ] **Step 1: `docs/dag.md`**
+- [x] **Step 1: `docs/dag.md`**
 
 在「tool 步可选 retry」后增加「tool 步可选 timeout_sec」：
 
@@ -482,7 +482,7 @@ EOF
 builtin / MCP **不保证**步级超时生效。
 ```
 
-- [ ] **Step 2: `docs/manual.md` §5.3**
+- [x] **Step 2: `docs/manual.md` §5.3**
 
 用字段表替换「每行形如」：
 
@@ -496,11 +496,11 @@ builtin / MCP **不保证**步级超时生效。
 | `ms` | 耗时毫秒 |
 | `detail` | 短摘要 |
 
-- [ ] **Step 3: architecture §8.1**
+- [x] **Step 3: architecture §8.1**
 
 「规划选型稳健」旁或「步骤可观测」行注明 tool 步可选 `timeout_sec`。
 
-- [ ] **Step 4: Commit + 勾选本计划复选框**
+- [x] **Step 4: Commit + 勾选本计划复选框**
 
 ```bash
 git add docs/dag.md docs/manual.md docs/architecture.md \

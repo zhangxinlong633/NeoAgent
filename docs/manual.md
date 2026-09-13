@@ -201,7 +201,15 @@ NEO_EVENTS=1 ./neo dag run show_time
 NEO_EVENTS=1 NEO_EVENTS_PATH=.neo/events.jsonl ./neo dag run cli_count
 ```
 
-每行形如：`{"ts":1726200000,"name":"dag_step","ok":1,"ms":12,"detail":"cli_count:run"}`。
+| 字段 | 含义 |
+|------|------|
+| `v` | schema 版本（当前 **1**；破坏性改字段再 bump） |
+| `ts` | unix 秒 |
+| `run_id` | 本进程内关联 id（首次 emit 懒生成，不跨进程） |
+| `name` | 事件名 |
+| `ok` | `0` / `1` |
+| `ms` | 耗时毫秒（未知可为 0） |
+| `detail` | 短摘要（截断并 JSON 转义） |
 
 事件名：`session_start`、`tool_call`、`tool_result`、`dag_step`、`llm_done`、`error`。`-v` 仍是人类可读步骤日志，可与事件流同时开。
 

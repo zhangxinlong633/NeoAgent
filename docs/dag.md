@@ -86,6 +86,21 @@
 }
 ```
 
+## tool 步可选 timeout_sec
+
+仅 `type: tool`。正整数秒 **1..600** 时覆盖该次 **command** 墙钟超时；`0` 或缺省不覆盖矩阵 / `commands[].timeout_sec`。超时输出为 `ERROR: timeout`，计入失败，进入上方 `retry.max` 与（若开启）`on_tool_fail.llm`。每次 attempt 重新计时。builtin / MCP **不保证**步级超时生效。
+
+```json5
+{
+  id: "slow",
+  type: "tool",
+  tool: "sleep_n",
+  timeout_sec: 5,
+  retry: { max: 1 },
+  args: {},
+}
+```
+
 ## tool 失败自动 LLM 热线（可选）
 
 默认**关闭**。打开后：本地 `retry.max` 耗尽仍失败时，引擎自动问一次模型（无 tools）只答 `RETRY` / `ABORT`；`RETRY` 则用**同一 args** 再跑该 tool。模型不改图、不改参数、不选下一步。

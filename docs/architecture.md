@@ -434,9 +434,10 @@ DAG 为调度层认可的标准编排输入。目标元素集合如下；本仓�
 
 | 主题 | 现状 | 说明 |
 |------|------|------|
-| 步骤可观测 | 已具备 | `-v` 打印 `type` / `tool` / `tools=on\|off`；失败时即使无 `-v` 也打印 `status=fail` |
+| 步骤可观测 | 已具备 | `-v` 打印 `type` / `tool` / `tools=on\|off`；失败时即使无 `-v` 也打印 `status=fail`；可选 `NEO_EVENTS` JSONL（`v`/`run_id`） |
 | Catalog SOP | 已具备 | 如 `show_time`、`repo_pulse`、`workspace_brief`（取数→整理→落盘） |
 | 规划选型稳健 | 部分→增强 | 未知 `use` 可解释 + catalog hint；`requires` 预检；可选 `plan.catalog_only` |
+| tool 步超时 | 已具备 | `timeout_sec` 1..600 覆盖 command 墙钟；进现有 `retry.max`；builtin/MCP 不保证 |
 | 本地优先约定 | 文档约定 | DAG 中 `type:tool` 走矩阵本地能力，`type:llm` 才调远端模型；完整计算漂移仍为远期 |
 | 多路 route / tool retry | 已具备 | `route.cases` 有序多臂；`retry.max` 仅 tool、0..3；仍无 LLM `decide` |
 | tool 失败 LLM 热线 | 已具备（默认关） | `dag.on_tool_fail.llm`：本地 retry 耗尽后问 RETRY/ABORT；不改 args、不跳步 |

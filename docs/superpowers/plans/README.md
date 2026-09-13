@@ -9,4 +9,4 @@
 | 计划 | 状态 |
 |------|------|
 | [`2026-09-13-near-term-evolution.md`](2026-09-13-near-term-evolution.md) | 已完成（plan / 会话 / 事件初版 / Blender / 卫生） |
-| [`2026-09-13-dag-timeout-events-v1.md`](2026-09-13-dag-timeout-events-v1.md) | 进行中（tool 步 `timeout_sec` + 事件 `v`/`run_id`） |
+| [`2026-09-13-dag-timeout-events-v1.md`](2026-09-13-dag-timeout-events-v1.md) | 已完成（tool 步 `timeout_sec` + 事件 `v`/`run_id`） |
