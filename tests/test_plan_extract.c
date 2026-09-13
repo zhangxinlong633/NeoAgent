@@ -181,6 +181,50 @@ int main(void) {
     config_free(&c);
   }
 
+  /* Task A1: catalog hint + unknown use 报告 */
+  {
+    agent_config_t c;
+    dag_t *dags;
+    char *hint;
+    char *names[1];
+    int nbad;
+    config_init(&c);
+    dags = calloc(3, sizeof(dag_t));
+    if (!dags) {
+      fprintf(stderr, "oom\n");
+      return 1;
+    }
+    dags[0].name = strdup("alpha_dag");
+    dags[1].name = strdup("beta_dag");
+    dags[2].name = strdup("gamma_very_long_catalog_name_for_truncation_test");
+    c.dags = dags;
+    c.dag_count = 3;
+    hint = plan_format_catalog_hint(&c, 2, 240);
+    if (!hint || !strstr(hint, "alpha_dag") || !strstr(hint, "beta_dag") || !strstr(hint, "...")) {
+      fprintf(stderr, "catalog hint max_names failed: %s\n", hint ? hint : "(null)");
+      free(hint);
+      config_free(&c);
+      return 1;
+    }
+    free(hint);
+    hint = plan_format_catalog_hint(&c, 16, 20);
+    if (!hint || !strstr(hint, "...")) {
+      fprintf(stderr, "catalog hint max_chars failed: %s\n", hint ? hint : "(null)");
+      free(hint);
+      config_free(&c);
+      return 1;
+    }
+    free(hint);
+    names[0] = "totally_unknown_xyz";
+    nbad = plan_report_unknown_use_names(&c, "plan", names, 1);
+    if (nbad != 1) {
+      fprintf(stderr, "expected 1 unknown use, got %d\n", nbad);
+      config_free(&c);
+      return 1;
+    }
+    config_free(&c);
+  }
+
   if (fails) return 1;
   printf("ok\n");
   return 0;

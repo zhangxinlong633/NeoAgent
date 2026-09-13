@@ -28,6 +28,21 @@ void plan_free_use(char **names, int n);
  */
 char *plan_dags_json_for_tools(char **names, int n);
 
+/*
+ * 生成 DAG catalog 短名单（逗号分隔），供未知 use 错误提示。
+ * max_names：最多列出几个；max_chars：总长度上限（含省略号）。
+ * 无图时返回 "(none)"。调用方 free。
+ */
+char *plan_format_catalog_hint(const agent_config_t *conf, int max_names, size_t max_chars);
+
+/*
+ * 对 use 中既非 catalog 也非 capability 的名字打印 stderr：
+ *   neo <cmd>: unknown use 'X' (not a catalog DAG or Capability Matrix name)
+ * 并附带一行 catalog 摘要。返回未知名个数。
+ */
+int plan_report_unknown_use_names(const agent_config_t *conf, const char *cmd,
+                                  char *const *use_names, int use_n);
+
 /* 拼 planner system prompt：DAG catalog + 能力矩阵名单 + 知识/工程路由规则。调用方 free。 */
 char *plan_build_system_prompt(const agent_config_t *conf, int target_steps);
 

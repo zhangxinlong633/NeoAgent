@@ -76,6 +76,91 @@ char *plan_dags_json_for_tools(char **names, int n) {
   return out;
 }
 
+/* 未知 use 提示用的 catalog 短名单；控制长度避免刷屏。 */
+char *plan_format_catalog_hint(const agent_config_t *conf, int max_names, size_t max_chars) {
+  char *buf;
+  size_t used = 0;
+  int i, n_listed = 0;
+  int truncated = 0;
+  if (max_names < 1) max_names = 1;
+  if (max_chars < 8) max_chars = 8;
+  buf = malloc(max_chars + 1);
+  if (!buf) return NULL;
+  buf[0] = '\0';
+  if (!conf || conf->dag_count < 1) {
+    snprintf(buf, max_chars + 1, "(none)");
+    return buf;
+  }
+  for (i = 0; i < conf->dag_count; i++) {
+    const char *nm = conf->dags[i].name;
+    size_t nlen;
+    if (!nm || !nm[0]) continue;
+    if (n_listed >= max_names) {
+      truncated = 1;
+      break;
+    }
+    nlen = strlen(nm);
+    /* ", " + name + 可能的 "..." */
+    if (used > 0 && used + 2 + nlen + 4 > max_chars) {
+      truncated = 1;
+      break;
+    }
+    if (used == 0 && nlen + 4 > max_chars) {
+      truncated = 1;
+      break;
+    }
+    if (used > 0) {
+      buf[used++] = ',';
+      buf[used++] = ' ';
+      buf[used] = '\0';
+    }
+    if (used + nlen > max_chars) {
+      truncated = 1;
+      break;
+    }
+    memcpy(buf + used, nm, nlen);
+    used += nlen;
+    buf[used] = '\0';
+    n_listed++;
+  }
+  if (n_listed == 0) {
+    snprintf(buf, max_chars + 1, "(none)");
+    return buf;
+  }
+  if (truncated && used + 3 <= max_chars) {
+    memcpy(buf + used, "...", 3);
+    used += 3;
+    buf[used] = '\0';
+  }
+  return buf;
+}
+
+int plan_report_unknown_use_names(const agent_config_t *conf, const char *cmd,
+                                  char *const *use_names, int use_n) {
+  int i, n_bad = 0;
+  char *hint;
+  const char *c = (cmd && cmd[0]) ? cmd : "plan";
+  if (!use_names || use_n < 1) return 0;
+  for (i = 0; i < use_n; i++) {
+    const char *nm = use_names[i];
+    if (!nm || !nm[0]) continue;
+    if (config_find_dag(conf, nm)) continue;
+    if (plan_name_is_capability(conf, nm)) continue;
+    fprintf(stderr,
+            "neo %s: unknown use '%s' (not a catalog DAG or Capability Matrix name; "
+            "use a catalog name in \"use\", or invent type:tool steps)\n",
+            c, nm);
+    n_bad++;
+  }
+  if (n_bad < 1) return 0;
+  hint = plan_format_catalog_hint(conf, 16, 240);
+  if (hint) {
+    fprintf(stderr, "neo %s: available catalog DAGs: %s\n", c, hint);
+    free(hint);
+  }
+  return n_bad;
+}
+
 int plan_extract_dags_json(const char *llm_text, char **out_json) {
   const char *p, *start = NULL, *end = NULL;
   char *slice = NULL;
@@ -618,15 +703,7 @@ int plan_run(const agent_config_t *conf, const char *task, int do_run, int quiet
           n_bad++;
       }
       if (n_bad > 0) {
-        for (ui = 0; ui < use_n; ui++) {
-          if (!config_find_dag(conf, use_names[ui]) &&
-              !plan_name_is_capability(conf, use_names[ui])) {
-            fprintf(stderr,
-                    "neo %s: '%s' is neither a catalog DAG nor a Capability Matrix name "
-                    "(use a DAG catalog name in \"use\", or invent type:tool steps)\n",
-                    do_run ? "run" : "plan", use_names[ui]);
-          }
-        }
+        (void)plan_report_unknown_use_names(conf, do_run ? "run" : "plan", use_names, use_n);
         plan_free_use(use_names, use_n);
         return -1;
       }
@@ -642,10 +719,15 @@ int plan_run(const agent_config_t *conf, const char *task, int do_run, int quiet
         goto materialize_from_json;
       }
       if (n_cap > 0 && n_wf > 0) {
+        char *hint = plan_format_catalog_hint(conf, 16, 240);
         fprintf(stderr,
                 "neo %s: \"use\" mixes catalog DAGs and capability names; "
                 "emit separate catalog use or type:tool invent instead\n",
                 do_run ? "run" : "plan");
+        if (hint) {
+          fprintf(stderr, "neo %s: available catalog DAGs: %s\n", do_run ? "run" : "plan", hint);
+          free(hint);
+        }
         plan_free_use(use_names, use_n);
         return -1;
       }

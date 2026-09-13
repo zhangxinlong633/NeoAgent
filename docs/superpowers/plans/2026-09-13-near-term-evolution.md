@@ -38,10 +38,10 @@
 
 **Files:** `src/dag/plan.c`、相关测试 / CLI 冒烟
 
-- [ ] 当模型输出 `{"use":[...]}` 但名字非 catalog：stderr 已有部分提示；统一为稳定错误码文案（含「可用 catalog 名」摘要，长度有上限）
-- [ ] 当 `use` 与 capability 名混淆：保持拒绝，并提示应改为 `type:tool` 现编或正确 catalog
-- [ ] 增加/扩展 fixture：错误 `use` → 非 0 退出且 stderr 含固定关键字
-- [ ] `make test` / 相关 CLI 冒烟
+- [x] 当模型输出 `{"use":[...]}` 但名字非 catalog：stderr 已有部分提示；统一为稳定错误码文案（含「可用 catalog 名」摘要，长度有上限）
+- [x] 当 `use` 与 capability 名混淆：保持拒绝，并提示应改为 `type:tool` 现编或正确 catalog
+- [x] 增加/扩展 fixture：错误 `use` → 非 0 退出且 stderr 含固定关键字
+- [x] `make test` / 相关 CLI 冒烟
 
 ### Task A2: requires 预检（catalog 与现编）
 
