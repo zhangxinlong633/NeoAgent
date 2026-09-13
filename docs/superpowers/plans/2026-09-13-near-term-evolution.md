@@ -69,9 +69,9 @@
 
 **Files:** `docs/manual.md`、`docs/examples.md`、`example/usage/daemon.md`、`README*.md`
 
-- [ ] 明确两种模式对照表：`-S` 落盘 vs daemon 内存（今日行为）
-- [ ] 写清「推荐路径」：多轮续聊优先 `-S` / `-D` 是否即将支持挂载（见 B2）
-- [ ] 若 B2 延期：文档写死「daemon 不写 `-S`」，避免模型/用户再猜
+- [x] 明确两种模式对照表：`-S` 落盘 vs daemon 内存（今日行为）
+- [x] 写清「推荐路径」：多轮续聊优先 `-S` / `-D` 是否即将支持挂载（见 B2）
+- [x] 若 B2 延期：文档写死「daemon 不写 `-S`」，避免模型/用户再猜
 
 ### Task B2: daemon 可选挂载具名会话（实现）
 

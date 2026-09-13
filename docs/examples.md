@@ -163,7 +163,9 @@ neo tool: read_file
 ./neo --session-clear ship
 ```
 
-`-S` / `--session ID[,ID...]` 按序加载多个会话历史并注入本次请求；**本轮只写回第一个 ID**。省略 `-S` 时等价于 `-S default`。id 仅 `[A-Za-z0-9_-]`，最多 8 个、不可重复。`-N` / `--session-new` 与 `-S` 不能同用。`--session-list` 列出已有会话；`--session-clear` 仅清除单个 id。轮数上限为 `session.max_turns`（默认 10）。与 `neo daemon` 内存会话独立。
+`-S` / `--session ID[,ID...]` 按序加载多个会话历史并注入本次请求；**本轮只写回第一个 ID**。省略 `-S` 时等价于 `-S default`。id 仅 `[A-Za-z0-9_-]`，最多 8 个、不可重复。`-N` / `--session-new` 与 `-S` 不能同用。`--session-list` 列出已有会话；`--session-clear` 仅清除单个 id。轮数上限为 `session.max_turns`（默认 10）。
+
+**与 daemon 无关**：`-S` 落盘与 `neo -D` 内存历史是两套机制；今日 `-D` **不**读写 `.neo/sessions/`（即便命令行带了 `-S` 也会被忽略）。可恢复续聊用本节；本机 REPL 用 §6。对照表见 [`manual.md`](manual.md) §4。
 
 同会话切换角色（配置顶层 `roles`，见 `config/config.json5.example`）：
 
@@ -343,6 +345,8 @@ Planner 倾向约 4 步编辑流水线（理解 → 起草 → 自检 → 终稿
 ---
 
 ## 6. 多轮会话（daemon）
+
+Daemon 历史只在**当前进程内存**里；退出即丢，**不会**写入 `-S` 会话文件。需要跨进程续聊请用 §3.5 的 `-S`，不要写 `./neo -D -S id`（今日无效）。对照：[`manual.md`](manual.md) §4。
 
 ### 6.1 交互式 stdin
 

@@ -30,7 +30,7 @@ The execution spine is **DAG ∥ Capability Matrix ∥ Policy**; LLM and Memory 
 8. Named CLI sessions — default id `default`; `-S ID`; `--session-list` / `--session-clear`
 9. Multi-session mix — `-S a,b` loads in order; writes the turn to the **first** ID only
 10. New default session — `-N` / `--session-new` archives `default` → `YYYYMMDD-HHMMSS`, then chats on fresh `default`
-11. Daemon multi-turn — `neo daemon` / `-D` / `--daemon` / `--socket`; interactive `User>` / `neo>` + Markdown; UTF-8 erase (`IUTF8`); in-memory turns, independent of `-S` files
+11. Daemon multi-turn — `neo daemon` / `-D` / `--daemon` / `--socket`; interactive `User>` / `neo>` + Markdown; UTF-8 erase (`IUTF8`); **in-memory only** (does **not** read/write `-S` session files today)
 12. On-host vector memory — recall, heuristic auto-store, `memory_add`, `memory store|recall`
 13. Terminal Markdown — on by default (md4c); `--no-render` for raw text
 14. Profiles / diagnostics — `-p` / `-m` / `-v` / `-d`
@@ -85,10 +85,10 @@ Common entry points:
 
 1. Chat — `./neo "…"` (uses session `default`; Markdown on; `--no-render` for raw)
 2. New default session — `./neo -N "…"` (archive `default`, then chat)
-3. Named sessions — `./neo -S id` / `-S a,b`
+3. Named sessions — `./neo -S id` / `-S a,b` (durable; preferred for resumable chat)
 4. JSON / file — `./neo -j "…"` / `./neo -o FILE "…"` / `./neo -j -o FILE "…"`
 5. DAG — `./neo dag run <name>` / `./neo run <name|"goal">` / `./neo plan "goal"`
-6. Multi-turn — `./neo -D` (or `daemon` / `--daemon`) / `--socket PATH`
+6. Multi-turn REPL — `./neo -D` (in-memory only; does not use `-S` files today) / `--socket PATH`
 7. Memory — `./neo memory store|recall "…"`
 8. Profile — `./neo -p demo …`
 

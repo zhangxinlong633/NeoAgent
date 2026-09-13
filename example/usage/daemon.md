@@ -16,4 +16,15 @@ Socket（无提示符，一发一收原文）：
 echo "你好" | nc -U /tmp/neo.sock
 ```
 
-内存轮次与 `-S` 落盘会话独立。细则见 [`docs/manual.md`](../../docs/manual.md) §4.5。
+## 与 `-S` 的关系（今日行为）
+
+| | Daemon `-D` | 具名会话 `-S` |
+|--|-------------|---------------|
+| 历史 | 进程内存 | `.neo/sessions/<id>.json` |
+| 退出后 | 丢失 | 可续聊 |
+| 互相读写 | **否**（带 `-S` 也会被忽略） | 不进 daemon |
+
+要可恢复多轮 → 用 [`session.md`](session.md) 的 `-S`，不要用 daemon。  
+本机连续 REPL、不在乎落盘 → 用本节的 `-D`。
+
+细则与推荐路径：[`docs/manual.md`](../../docs/manual.md) §4。
