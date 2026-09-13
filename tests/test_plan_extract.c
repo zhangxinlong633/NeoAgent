@@ -283,6 +283,96 @@ int main(void) {
     config_free(&c);
   }
 
+  /* Task A3: catalog_only 开关（env 优先于配置） */
+  {
+    agent_config_t c;
+    char *prompt;
+    config_init(&c);
+    unsetenv("NEO_PLAN_CATALOG_ONLY");
+    if (plan_catalog_only_enabled(&c) != 0) {
+      fprintf(stderr, "default catalog_only should be off\n");
+      return 1;
+    }
+    if (plan_ensure_invent_allowed(&c, "plan") != 0) {
+      fprintf(stderr, "invent should be allowed by default\n");
+      return 1;
+    }
+    c.plan.catalog_only = 1;
+    if (plan_catalog_only_enabled(&c) != 1) {
+      fprintf(stderr, "config catalog_only=1 not honored\n");
+      return 1;
+    }
+    if (plan_ensure_invent_allowed(&c, "plan") == 0) {
+      fprintf(stderr, "invent should be rejected when catalog_only\n");
+      return 1;
+    }
+    prompt = plan_build_system_prompt(&c, 10);
+    if (!prompt || !strstr(prompt, "CATALOG-ONLY") || !strstr(prompt, "MUST NOT invent")) {
+      fprintf(stderr, "prompt missing catalog-only rules\n");
+      free(prompt);
+      config_free(&c);
+      return 1;
+    }
+    free(prompt);
+    c.plan.catalog_only = 0;
+    setenv("NEO_PLAN_CATALOG_ONLY", "1", 1);
+    if (plan_catalog_only_enabled(&c) != 1) {
+      fprintf(stderr, "env NEO_PLAN_CATALOG_ONLY=1 not honored\n");
+      unsetenv("NEO_PLAN_CATALOG_ONLY");
+      config_free(&c);
+      return 1;
+    }
+    setenv("NEO_PLAN_CATALOG_ONLY", "0", 1);
+    c.plan.catalog_only = 1;
+    if (plan_catalog_only_enabled(&c) != 0) {
+      fprintf(stderr, "env=0 should force catalog_only off\n");
+      unsetenv("NEO_PLAN_CATALOG_ONLY");
+      config_free(&c);
+      return 1;
+    }
+    unsetenv("NEO_PLAN_CATALOG_ONLY");
+    config_free(&c);
+    /* 配置文件 plan.catalog_only */
+    {
+      char path[] = "/tmp/neo-a3-plan-XXXXXX";
+      int fd = mkstemp(path);
+      FILE *f;
+      agent_config_t loaded;
+      if (fd < 0) {
+        fprintf(stderr, "mkstemp failed\n");
+        return 1;
+      }
+      f = fdopen(fd, "w");
+      if (!f) {
+        close(fd);
+        unlink(path);
+        return 1;
+      }
+      fputs("{ model: { base_url: \"http://127.0.0.1:9\", name: \"t\", api_key: \"x\" },\n"
+            "  plan: { catalog_only: true, target_steps: 8 } }\n",
+            f);
+      fclose(f);
+      config_init(&loaded);
+      if (config_load_file(&loaded, path) != 0) {
+        fprintf(stderr, "load catalog_only config failed\n");
+        unlink(path);
+        return 1;
+      }
+      unlink(path);
+      if (!loaded.plan.catalog_only || loaded.plan.target_steps != 8) {
+        fprintf(stderr, "parsed plan.catalog_only/target_steps wrong\n");
+        config_free(&loaded);
+        return 1;
+      }
+      if (plan_catalog_only_enabled(&loaded) != 1) {
+        fprintf(stderr, "loaded config should enable catalog_only\n");
+        config_free(&loaded);
+        return 1;
+      }
+      config_free(&loaded);
+    }
+  }
+
   if (fails) return 1;
   printf("ok\n");
   return 0;

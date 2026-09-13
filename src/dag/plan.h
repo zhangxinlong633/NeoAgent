@@ -15,6 +15,15 @@
 /* 软步数目标：CLI > conf->plan.target_steps > 默认 10；夹紧到 1..PLAN_MAX_TARGET_STEPS。 */
 int plan_resolve_target_steps(const agent_config_t *conf, int cli_steps);
 
+/*
+ * 是否仅允许 catalog use（禁止现编 dags）。
+ * 环境变量 NEO_PLAN_CATALOG_ONLY=1/true/yes 开启；=0/false/no 关闭；未设则读 plan.catalog_only。
+ */
+int plan_catalog_only_enabled(const agent_config_t *conf);
+
+/* catalog_only 时拒绝 invent：stderr 说明后返回 -1；否则返回 0。 */
+int plan_ensure_invent_allowed(const agent_config_t *conf, const char *cmd);
+
 /* 从模型输出抽出含 "dags" 的 JSON（支持 fenced 代码块）。调用方 free *out_json。 */
 int plan_extract_dags_json(const char *llm_text, char **out_json);
 

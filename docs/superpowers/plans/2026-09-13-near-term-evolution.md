@@ -56,10 +56,10 @@
 
 **Files:** `src/dag/plan.c`、planner prompt 字符串
 
-- [ ] 配置项或环境变量（择一，默认偏安全）：例如 `plan.prefer_catalog_only` / `NEO_PLAN_CATALOG_ONLY=1` 时，禁止输出完整 `dags` 数组（仅允许 `use`）
-- [ ] 默认保持现行为（可现编），但 `-v` 时统计「use vs invent」
-- [ ] 手册补充开关说明
-- [ ] Commit（无 agent trailer）
+- [x] 配置项或环境变量（择一，默认偏安全）：例如 `plan.prefer_catalog_only` / `NEO_PLAN_CATALOG_ONLY=1` 时，禁止输出完整 `dags` 数组（仅允许 `use`）
+- [x] 默认保持现行为（可现编），但 `-v` 时统计「use vs invent」
+- [x] 手册补充开关说明
+- [x] Commit（无 agent trailer）
 
 ---
 

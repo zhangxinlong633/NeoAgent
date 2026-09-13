@@ -206,6 +206,14 @@ Policy 示例：`shell_enabled` 默认关；`http_fetch_enabled` + `http_allow_h
 
 节点类型概要：`tool` / `llm`（步骤字段 `"tools": "on"|"off"`）/ `loop` / `route`。
 
+可选收紧规划（默认仍允许现编 `dags`）：
+
+```json5
+{ plan: { catalog_only: true } }
+```
+
+或环境变量 `NEO_PLAN_CATALOG_ONLY=1`（`0` 强制关闭）。开启后模型只能输出 `{"use":["catalog_name"]}`，禁止现编完整 `dags`。`-v` 时 stderr 会打印 `plan_path=use|invent`。
+
 权威说明：[`dag.md`](dag.md)。目录：[`../dags/README.md`](../dags/README.md)。
 
 ---

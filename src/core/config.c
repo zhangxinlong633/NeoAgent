@@ -688,6 +688,8 @@ static int fill_plan(agent_config_t *c, yyjson_val *obj) {
   }
   v = yyjson_obj_get(obj, "target_steps");
   if (yyjson_is_int(v) || yyjson_is_uint(v)) c->plan.target_steps = (int)yyjson_get_sint(v);
+  v = yyjson_obj_get(obj, "catalog_only");
+  if (yyjson_is_bool(v)) c->plan.catalog_only = yyjson_get_bool(v) ? 1 : 0;
   return 0;
 }
 

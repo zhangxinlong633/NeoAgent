@@ -210,10 +210,21 @@ Planner 先区分任务类型（prompt 约定，软目标默认仍为 **10**）�
 配置可选：
 
 ```json5
-{ plan: { target_steps: 10 } }
+{ plan: { target_steps: 10, catalog_only: false } }
 ```
 
 优先级：`--steps` > `plan.target_steps` > 默认 10（上限 32）。
+
+### catalog-only（半硬）
+
+默认允许「catalog `use` 优先，否则现编 `dags`」。若希望强制只选型：
+
+| 开关 | 效果 |
+|------|------|
+| `plan.catalog_only: true` | 仅允许 `{"use":[...]}`；现编 / 能力名降级 invent 均失败 |
+| `NEO_PLAN_CATALOG_ONLY=1` | 同左（覆盖配置）；`=0` 强制关闭 |
+
+`-v` / `--verbose` 时 stderr 增加：`plan_path=use` 或 `plan_path=invent`（及当前 `catalog_only` 标志）。
 
 ```bash
 ./neo run "用 echo_args 打出 hello，再让 llm 总结一句"

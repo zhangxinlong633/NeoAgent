@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <stdbool.h>
 
@@ -351,6 +352,31 @@ int plan_resolve_target_steps(const agent_config_t *conf, int cli_steps) {
   return n;
 }
 
+/* 环境变量优先：显式 0/1 覆盖配置；未设则读 plan.catalog_only（默认关，可现编）。 */
+int plan_catalog_only_enabled(const agent_config_t *conf) {
+  const char *e = getenv("NEO_PLAN_CATALOG_ONLY");
+  if (e && e[0]) {
+    if (e[0] == '0' || strcasecmp(e, "false") == 0 || strcasecmp(e, "no") == 0 ||
+        strcasecmp(e, "off") == 0)
+      return 0;
+    if (e[0] == '1' || strcasecmp(e, "true") == 0 || strcasecmp(e, "yes") == 0 ||
+        strcasecmp(e, "on") == 0)
+      return 1;
+  }
+  return (conf && conf->plan.catalog_only) ? 1 : 0;
+}
+
+int plan_ensure_invent_allowed(const agent_config_t *conf, const char *cmd) {
+  const char *c = (cmd && cmd[0]) ? cmd : "plan";
+  if (!plan_catalog_only_enabled(conf)) return 0;
+  fprintf(stderr,
+          "neo %s: catalog-only mode — inventing dags JSON is disabled "
+          "(set plan.catalog_only:false or unset NEO_PLAN_CATALOG_ONLY; "
+          "emit {\"use\":[\"catalog_DAG_name\"]} only)\n",
+          c);
+  return -1;
+}
+
 char *plan_build_system_prompt(const agent_config_t *conf, int target_steps) {
   /* 拼 planner 提示：先 DAG catalog（鼓励 use），再知识/工程现编规则，再能力矩阵名单。 */
   size_t cap = 12288;
@@ -417,6 +443,14 @@ char *plan_build_system_prompt(const agent_config_t *conf, int target_steps) {
       "{\"id\":\"...\",\"type\":\"llm\",\"prompt\":\"...\",\"tools\":\"off\"}]}]}\n```\n\n"
       "DAG catalog (prefer {\"use\":[\"name\"]}):\n",
       target_steps, target_steps, target_steps);
+  if (plan_catalog_only_enabled(conf)) {
+    n += (size_t)snprintf(
+        s + n, cap - n,
+        "\nCATALOG-ONLY MODE (active):\n"
+        "- You MUST emit only {\"use\":[\"catalog_name\"]} choosing names from the catalog.\n"
+        "- You MUST NOT invent a full {\"dags\":[...]} array under any circumstance.\n"
+        "- If no catalog DAG fits, still pick the closest catalog entry (do not invent).\n\n");
+  }
   {
     char *cat = dag_dir_catalog_listing(conf);
     if (cat) {
@@ -676,6 +710,18 @@ int plan_run(const agent_config_t *conf, const char *task, int do_run, int quiet
            "DAG catalog. Capability/tool names must NOT appear in \"use\"; put them in "
            "invented type:tool steps instead. If no catalog DAG fits, emit dags JSON.",
            task);
+  if (plan_catalog_only_enabled(conf)) {
+    free(user);
+    user = malloc(strlen(task) + 320);
+    if (!user) {
+      free(sys);
+      return -1;
+    }
+    snprintf(user, strlen(task) + 320,
+             "Task:\n%s\n\nCATALOG-ONLY: reply with {\"use\":[\"catalog_DAG_name\"]} only. "
+             "Do not invent {\"dags\":[...]}.",
+             task);
+  }
   if (debug) {
     fprintf(stderr, "neo %s: calling LLM to build DAG...\n", do_run ? "run" : "plan");
   }
@@ -717,6 +763,10 @@ int plan_run(const agent_config_t *conf, const char *task, int do_run, int quiet
       }
       /* 模型把能力名误写入 use：降级为单图 tool 步，走现编 materialize 路径。 */
       if (n_cap > 0 && n_wf == 0) {
+        if (plan_ensure_invent_allowed(conf, do_run ? "run" : "plan") != 0) {
+          plan_free_use(use_names, use_n);
+          return -1;
+        }
         json = plan_dags_json_for_tools(use_names, use_n);
         plan_free_use(use_names, use_n);
         if (!json) return -1;
@@ -780,6 +830,9 @@ int plan_run(const agent_config_t *conf, const char *task, int do_run, int quiet
       fprintf(stderr, "neo %s: selected catalog DAG", do_run ? "run" : "plan");
       for (ui = 0; ui < use_n; ui++) fprintf(stderr, " '%s'", use_names[ui]);
       fprintf(stderr, "\n");
+      if (verbose)
+        fprintf(stderr, "neo %s: plan_path=use catalog_only=%d\n", do_run ? "run" : "plan",
+                plan_catalog_only_enabled(conf));
       if (do_run) {
         for (ui = 0; ui < use_n; ui++) {
           char *out = NULL;
@@ -805,6 +858,11 @@ int plan_run(const agent_config_t *conf, const char *task, int do_run, int quiet
     plan_free_use(use_names, use_n);
   }
 
+  if (plan_ensure_invent_allowed(conf, do_run ? "run" : "plan") != 0) {
+    llm_response_free(&resp);
+    return -1;
+  }
+
   if (plan_extract_dags_json(resp.data ? resp.data : "", &json) != 0) {
     fprintf(stderr, "neo %s: could not extract dags JSON from model output\n",
             do_run ? "run" : "plan");
@@ -815,6 +873,14 @@ int plan_run(const agent_config_t *conf, const char *task, int do_run, int quiet
   llm_response_free(&resp);
 
 materialize_from_json:
+
+  if (plan_ensure_invent_allowed(conf, do_run ? "run" : "plan") != 0) {
+    free(json);
+    return -1;
+  }
+  if (verbose)
+    fprintf(stderr, "neo %s: plan_path=invent catalog_only=%d\n", do_run ? "run" : "plan",
+            plan_catalog_only_enabled(conf));
 
   if (!quiet_plan) {
     fputs(json, stdout);

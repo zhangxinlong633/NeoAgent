@@ -157,6 +157,7 @@ typedef struct {
 
 typedef struct {
   int target_steps; /* 0 = unset; soft preference for planner */
+  int catalog_only; /* 1：仅允许 {"use":...}，禁止现编 dags；默认 0 */
 } plan_config_t;
 
 /* DAG 运行时策略（顶层键 "dag"，与 "dags" 数组不同）。 */
