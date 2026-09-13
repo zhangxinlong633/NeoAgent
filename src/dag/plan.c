@@ -634,6 +634,14 @@ int plan_materialize_config(const agent_config_t *base, const char *dags_json,
     unlink(path);
     return -1;
   }
+  /* 现编图同样预检 requires，避免 plan 写出无法执行的配置。 */
+  for (i = 0; i < out_conf->dag_count; i++) {
+    if (dag_check_requires(out_conf, "plan", &out_conf->dags[i]) != 0) {
+      config_free(out_conf);
+      unlink(path);
+      return -1;
+    }
+  }
   if (out_path && out_path_sz) {
     snprintf(out_path, out_path_sz, "%s", path);
   } else {
@@ -742,6 +750,15 @@ int plan_run(const agent_config_t *conf, const char *task, int do_run, int quiet
       if (!use_json) {
         plan_free_use(use_names, use_n);
         return -1;
+      }
+      /* plan 与 run 均预检：选中 catalog 图但缺 requires 则失败（不静默选型）。 */
+      for (ui = 0; ui < use_n; ui++) {
+        const dag_t *sel = config_find_dag(conf, use_names[ui]);
+        if (sel && dag_check_requires(conf, do_run ? "run" : "plan", sel) != 0) {
+          free(use_json);
+          plan_free_use(use_names, use_n);
+          return -1;
+        }
       }
       if (!quiet_plan) {
         fputs(use_json, stdout);

@@ -4,7 +4,9 @@
  */
 #include "dag.h"
 #include "agent_tools.h"
+#include "capability_matrix.h"
 #include "llm.h"
+#include "yyjson.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -687,6 +689,75 @@ static int dag_run_graph(const agent_config_t *conf, const char *root_real, cons
   return 0;
 }
 
+/*
+ * 解析 dag->requires（JSON 数组文本或单个能力名），逐个查矩阵。
+ * 不做 PATH/模糊匹配；缺省或空串视为无依赖。
+ */
+int dag_check_requires(const agent_config_t *conf, const char *cmd, const dag_t *dag) {
+  capability_matrix_t mx;
+  const char *c;
+  const char *req;
+  const char *dname;
+  int n_miss = 0;
+
+  if (!conf || !dag) return -1;
+  c = (cmd && cmd[0]) ? cmd : "dag";
+  dname = (dag->name && dag->name[0]) ? dag->name : "?";
+  req = dag->requires;
+  if (!req || !req[0]) return 0;
+
+  capability_matrix_init(&mx);
+  if (capability_matrix_build_from_config(&mx, conf) != 0) {
+    capability_matrix_free(&mx);
+    fprintf(stderr, "neo %s: cannot build Capability Matrix to check requires for DAG '%s'\n",
+            c, dname);
+    return -1;
+  }
+
+  if (req[0] == '[') {
+    yyjson_doc *doc = yyjson_read(req, strlen(req), 0);
+    yyjson_val *arr, *el;
+    size_t idx, max;
+    if (!doc || !(arr = yyjson_doc_get_root(doc)) || !yyjson_is_arr(arr)) {
+      fprintf(stderr, "neo %s: DAG '%s' has invalid requires (want JSON string array)\n",
+              c, dname);
+      if (doc) yyjson_doc_free(doc);
+      capability_matrix_free(&mx);
+      return -1;
+    }
+    yyjson_arr_foreach(arr, idx, max, el) {
+      const char *nm;
+      if (!yyjson_is_str(el)) {
+        fprintf(stderr, "neo %s: DAG '%s' requires entry must be string\n", c, dname);
+        n_miss++;
+        continue;
+      }
+      nm = yyjson_get_str(el);
+      if (!nm || !nm[0]) continue;
+      if (!capability_matrix_find(&mx, nm)) {
+        fprintf(stderr,
+                "neo %s: DAG '%s' missing required capability '%s' "
+                "(not in Capability Matrix or not enabled)\n",
+                c, dname, nm);
+        n_miss++;
+      }
+    }
+    yyjson_doc_free(doc);
+  } else {
+    /* 单名字符串形式 */
+    if (!capability_matrix_find(&mx, req)) {
+      fprintf(stderr,
+              "neo %s: DAG '%s' missing required capability '%s' "
+              "(not in Capability Matrix or not enabled)\n",
+              c, dname, req);
+      n_miss = 1;
+    }
+  }
+
+  capability_matrix_free(&mx);
+  return n_miss;
+}
+
 int dag_run(const agent_config_t *conf, const char *dag_name, char **out_text,
                  int verbose) {
   const dag_t *wf;
@@ -710,6 +781,8 @@ int dag_run(const agent_config_t *conf, const char *dag_name, char **out_text,
     }
     return -1;
   }
+  /* 执行前预检 requires：缺能力则拒绝跑图（plan/run/dag 共用此入口）。 */
+  if (dag_check_requires(conf, "run", wf) != 0) return -1;
 
 #if !defined(__APPLE__) && !defined(__linux__)
   fprintf(stderr, "neo: DAG not supported on this platform\n");

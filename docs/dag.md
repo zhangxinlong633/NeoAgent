@@ -150,6 +150,24 @@ dags/
 
 每个 DAG 文件建议写：`description`、`when`、`when_not`、`requires`、`outcome`（见 AGENTS.md §4.1）。这些字段会出现在 planner 的 catalog listing。场景分层见 [`applications.md`](applications.md) 与 [`dags/README.md`](../dags/README.md)。
 
+### `requires` 预检
+
+`requires` 不只是给 planner 看的元数据。在以下路径会**硬校验**：
+
+| 路径 | 行为 |
+|------|------|
+| `neo dag run` / `dag_run` | 执行前：每个名须在 Capability Matrix 中存在且 enabled |
+| `neo plan` / `neo run` 选型 `{"use":[...]}` | 选中 catalog 图后同样预检（即使只 plan 不执行） |
+| `neo plan` / `neo run` 现编 `dags` | `plan_materialize_config` 加载后对图内 `requires` 预检 |
+
+缺失时 stderr 形如：
+
+```text
+neo run: DAG 'foo' missing required capability 'bar' (not in Capability Matrix or not enabled)
+```
+
+进程非 0 退出，不执行该图。无 `requires` 或空数组则跳过。能力名须与矩阵行 `name` 完全一致（builtin / command / `mcp_*`）。
+
 Planner **优先**输出 `{"use":["catalog_name"]}` 选用目录中的图；没有合适的再现编 `{"dags":[...]}`。执行期仍是确定性 runner。
 
 由 LLM **一次性**选型或生成冻结的 DAG；执行期不重规划。

@@ -149,7 +149,7 @@ typedef struct {
   char *when;     /* LLM 选型：适用场景 */
   char *when_not; /* LLM 选型：不适用场景 */
   char *tags;
-  char *requires; /* 依赖的能力名（提示用） */
+  char *requires; /* 依赖的能力名；执行/materialize 前预检矩阵 */
   char *outcome;  /* 成功时可见结果 */
   dag_step_t *steps;
   int step_count;

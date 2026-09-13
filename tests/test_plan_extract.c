@@ -1,5 +1,6 @@
 #include "plan.h"
 #include "config.h"
+#include "dag.h"
 #include "dag_dir.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -221,6 +222,63 @@ int main(void) {
       fprintf(stderr, "expected 1 unknown use, got %d\n", nbad);
       config_free(&c);
       return 1;
+    }
+    config_free(&c);
+  }
+
+  /* Task A2: requires 预检 — 缺能力须失败；矩阵内能力通过 */
+  {
+    agent_config_t c;
+    dag_t dag;
+    int n;
+    config_init(&c);
+    c.tools.enabled = 1;
+    memset(&dag, 0, sizeof(dag));
+    dag.name = "need_missing_cap";
+    dag.requires = "[\"no_such_capability_xyz\"]";
+    n = dag_check_requires(&c, "plan", &dag);
+    if (n < 1) {
+      fprintf(stderr, "expected missing requires to fail, got %d\n", n);
+      config_free(&c);
+      return 1;
+    }
+    dag.requires = "[\"list_dir\"]";
+    n = dag_check_requires(&c, "plan", &dag);
+    if (n != 0) {
+      fprintf(stderr, "expected list_dir requires to pass, got %d\n", n);
+      config_free(&c);
+      return 1;
+    }
+    dag.requires = NULL;
+    n = dag_check_requires(&c, "plan", &dag);
+    if (n != 0) {
+      fprintf(stderr, "expected empty requires to pass, got %d\n", n);
+      config_free(&c);
+      return 1;
+    }
+    dag.requires = "[\"list_dir\", \"no_such_capability_xyz\"]";
+    n = dag_check_requires(&c, "run", &dag);
+    if (n != 1) {
+      fprintf(stderr, "expected 1 missing among mix, got %d\n", n);
+      config_free(&c);
+      return 1;
+    }
+    /* materialize 路径：缺 requires 须拒绝 */
+    {
+      agent_config_t planned;
+      char tmp[256];
+      const char *bad =
+          "{\"dags\":[{\"name\":\"bad_req\",\"requires\":[\"no_such_capability_xyz\"],"
+          "\"steps\":[{\"id\":\"a\",\"type\":\"llm\",\"prompt\":\"x\"}]}]}";
+      tmp[0] = '\0';
+      if (plan_materialize_config(&c, bad, &planned, tmp, sizeof(tmp)) == 0) {
+        fprintf(stderr, "materialize should fail on missing requires\n");
+        config_free(&planned);
+        if (tmp[0]) unlink(tmp);
+        config_free(&c);
+        return 1;
+      }
+      if (tmp[0]) unlink(tmp);
     }
     config_free(&c);
   }

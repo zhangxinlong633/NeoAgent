@@ -47,10 +47,10 @@
 
 **Files:** `src/dag/plan.c`、`src/dag/dag_dir.c`（或 materialize 路径）、DAG 文件元数据
 
-- [ ] 对将执行/写出的 DAG：读取 `requires[]`（若有），检查矩阵中能力均存在且 enabled
-- [ ] 缺失时：plan 校验失败；run 不执行并打印缺哪些名
-- [ ] 单测或 CLI：故意缺 requires → 失败
-- [ ] 文档：`docs/dag.md` 一小节说明 requires 预检
+- [x] 对将执行/写出的 DAG：读取 `requires[]`（若有），检查矩阵中能力均存在且 enabled
+- [x] 缺失时：plan 校验失败；run 不执行并打印缺哪些名
+- [x] 单测或 CLI：故意缺 requires → 失败
+- [x] 文档：`docs/dag.md` 一小节说明 requires 预检
 
 ### Task A3: 鼓励 catalog、限制胡编（软→半硬）
 
