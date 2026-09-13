@@ -21,11 +21,13 @@ int command_tool_find(const agent_config_t *conf, const char *name) {
   return -1;
 }
 int command_tool_run(const agent_config_t *conf, const char *root_real, const tool_command_t *cmd,
-                     const char *args_json, char **out_text, size_t *out_len) {
+                     const char *args_json, char **out_text, size_t *out_len,
+                     int timeout_override_sec) {
   (void)conf;
   (void)root_real;
   (void)cmd;
   (void)args_json;
+  (void)timeout_override_sec;
   if (out_text) *out_text = NULL;
   if (out_len) *out_len = 0;
   return -1;
@@ -93,7 +95,8 @@ static char *dup_err(const char *msg) {
 }
 
 int command_tool_run(const agent_config_t *conf, const char *root_real, const tool_command_t *cmd,
-                     const char *args_json, char **out_text, size_t *out_len) {
+                     const char *args_json, char **out_text, size_t *out_len,
+                     int timeout_override_sec) {
   char exe[PATH_MAX];
   char **child_argv = NULL;
   int pipe_out[2] = {-1, -1};
@@ -123,7 +126,10 @@ int command_tool_run(const agent_config_t *conf, const char *root_real, const to
 
   payload = (args_json && args_json[0]) ? args_json : "{}";
   max_out = cmd->max_output_bytes > 0 ? cmd->max_output_bytes : 65536;
+  /* override 仅本趟有效，不改 cmd 结构体 */
   timeout_sec = cmd->timeout_sec > 0 ? cmd->timeout_sec : 30;
+  if (timeout_override_sec > 0) timeout_sec = timeout_override_sec;
+  if (timeout_sec > 600) timeout_sec = 600;
 
   child_argv = calloc((size_t)cmd->argv_count + 1, sizeof(char *));
   if (!child_argv) {

@@ -596,7 +596,7 @@ static int tool_run_command(const agent_config_t *conf, const char *root_real, c
   tmp.timeout_sec = 30;
   tmp.max_output_bytes = 65536;
   tmp.pass_args = 0;
-  rc = command_tool_run(conf, root_real, &tmp, "{}", &out, &out_len);
+  rc = command_tool_run(conf, root_real, &tmp, "{}", &out, &out_len, 0);
   for (i = 0; i < n; i++) free(argv[i]);
   free(argv);
   if (rc != 0) {
@@ -960,7 +960,7 @@ static int run_one_tool(const agent_config_t *conf, const char *root_real, NeoTo
   idx = command_tool_find(conf, tc->name);
   if (idx >= 0) {
     if (command_tool_run(conf, root_real, &conf->tools.commands[idx],
-                         tc->arguments ? tc->arguments : "{}", &out, &out_len) != 0) {
+                         tc->arguments ? tc->arguments : "{}", &out, &out_len, 0) != 0) {
       int r = neo_buf_append(result, out ? out : "ERROR: command tool failed", 0);
       free(out);
       return r;
