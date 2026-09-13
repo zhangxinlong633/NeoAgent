@@ -18,6 +18,7 @@ SRC = \
 	src/core/neo_http.c \
 	src/core/neo_md_term.c \
 	src/core/neo_session.c \
+	src/core/neo_events.c \
 	src/llm/llm.c \
 	src/capability/agent_tools.c \
 	src/capability/command_tools.c \
@@ -99,7 +100,7 @@ $(TEST_PARSE_DAG): tests/test_parse_dags.c src/core/config.c src/capability/capa
 		src/capability/capability_dir.c src/dag/dag_dir.c src/vendor/yyjson.c
 
 TEST_DAG_SRCS = src/dag/dag.c src/dag/dag_dir.c src/capability/agent_tools.c \
-	src/capability/command_tools.c src/core/config.c $(TEST_HTTP) src/llm/llm.c \
+	src/capability/command_tools.c src/core/config.c src/core/neo_events.c $(TEST_HTTP) src/llm/llm.c \
 	src/capability/capability_matrix.c src/capability/capability_dir.c src/capability/mcp_stdio.c \
 	src/memory/neo_memory.c src/memory/neo_embed.c \
 	$(TEST_VENDOR)
@@ -127,12 +128,16 @@ $(TEST_PLAN): tests/test_plan_extract.c src/dag/plan.c $(TEST_DAG_SRCS)
 TEST_CAP_MATRIX = tests/test_capability_matrix
 $(TEST_CAP_MATRIX): tests/test_capability_matrix.c src/capability/capability_matrix.c \
 		src/capability/capability_dir.c src/dag/dag_dir.c src/capability/mcp_stdio.c \
-		src/core/config.c $(TEST_HTTP) src/capability/agent_tools.c src/capability/command_tools.c \
+		src/core/config.c src/core/neo_events.c $(TEST_HTTP) src/capability/agent_tools.c src/capability/command_tools.c \
 		src/llm/llm.c src/memory/neo_memory.c src/memory/neo_embed.c $(TEST_VENDOR)
 	$(CC) $(TEST_CFLAGS) -o $@ tests/test_capability_matrix.c src/capability/capability_matrix.c \
 		src/capability/capability_dir.c src/dag/dag_dir.c src/capability/mcp_stdio.c \
-		src/core/config.c $(TEST_HTTP) src/capability/agent_tools.c src/capability/command_tools.c \
+		src/core/config.c src/core/neo_events.c $(TEST_HTTP) src/capability/agent_tools.c src/capability/command_tools.c \
 		src/llm/llm.c src/memory/neo_memory.c src/memory/neo_embed.c $(TEST_VENDOR) $(LDFLAGS)
+
+TEST_NEO_EVENTS = tests/test_neo_events
+$(TEST_NEO_EVENTS): tests/test_neo_events.c src/core/neo_events.c
+	$(CC) $(TEST_CFLAGS) -o $@ tests/test_neo_events.c src/core/neo_events.c
 
 TEST_NEO_EMBED = tests/test_neo_embed
 $(TEST_NEO_EMBED): tests/test_neo_embed.c src/memory/neo_embed.c src/memory/neo_embed.h
@@ -159,7 +164,7 @@ $(TEST_CONFIG_ROLES): tests/test_config_roles.c src/core/config.c src/capability
 	$(CC) $(TEST_CFLAGS) -o $@ tests/test_config_roles.c src/core/config.c \
 		src/capability/capability_dir.c src/dag/dag_dir.c src/vendor/yyjson.c
 
-test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TEST_DAG_TMPL) $(TEST_DAG_DAG) $(TEST_DAG_ON_FAIL) $(TEST_PLAN) $(TEST_CAP_MATRIX) $(TEST_NEO_EMBED) $(TEST_NEO_MEMORY) $(TEST_NEO_MD) $(TEST_NEO_SESSION) $(TEST_CONFIG_ROLES) neo
+test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TEST_DAG_TMPL) $(TEST_DAG_DAG) $(TEST_DAG_ON_FAIL) $(TEST_PLAN) $(TEST_CAP_MATRIX) $(TEST_NEO_EVENTS) $(TEST_NEO_EMBED) $(TEST_NEO_MEMORY) $(TEST_NEO_MD) $(TEST_NEO_SESSION) $(TEST_CONFIG_ROLES) neo
 	./$(TEST_PARSE_CMD)
 	./$(TEST_CMD_EXEC)
 	./$(TEST_PARSE_DAG)
@@ -169,6 +174,7 @@ test: $(TEST_PARSE_CMD) $(TEST_CMD_EXEC) $(TEST_PARSE_DAG) $(TEST_DAG_LOOP) $(TE
 	./$(TEST_DAG_ON_FAIL)
 	./$(TEST_PLAN)
 	./$(TEST_CAP_MATRIX)
+	./$(TEST_NEO_EVENTS)
 	./$(TEST_NEO_EMBED)
 	./$(TEST_NEO_MEMORY)
 	./$(TEST_NEO_MD)

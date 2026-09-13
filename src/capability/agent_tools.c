@@ -7,6 +7,7 @@
 #include "capability_matrix.h"
 #include "command_tools.h"
 #include "mcp_stdio.h"
+#include "neo_events.h"
 #include "neo_http.h"
 #include "neo_memory.h"
 #include "yyjson.h"
@@ -979,6 +980,7 @@ int neo_dispatch_tool(const agent_config_t *conf, const char *root_real,
   NeoToolCall tc;
   NeoBuf result;
   int r;
+  long t0;
   if (out_text) *out_text = NULL;
   if (out_len) *out_len = 0;
   if (!conf || !root_real || !name || !out_text) return -1;
@@ -986,8 +988,12 @@ int neo_dispatch_tool(const agent_config_t *conf, const char *root_real,
   memset(&result, 0, sizeof(result));
   tc.name = (char *)name;
   tc.arguments = (char *)(args_json ? args_json : "{}");
+  neo_events_emit("tool_call", 1, 0, name);
+  t0 = neo_events_now_ms();
   r = run_one_tool(conf, root_real, &tc, &result);
+  neo_events_emit("tool_result", r == 0, neo_events_now_ms() - t0, name);
   if (r != 0) {
+    neo_events_emit("error", 0, 0, name);
     neo_buf_free(&result);
     return -1;
   }
@@ -1154,7 +1160,15 @@ int agent_run_with_tools(
         }
 
         for (ci = 0; ci < ncalls; ci++) {
-          if (run_one_tool(conf, root_real, &calls[ci], &tres) != 0) {
+          long t0;
+          int tr;
+          neo_events_emit("tool_call", 1, 0, calls[ci].name ? calls[ci].name : "?");
+          t0 = neo_events_now_ms();
+          tr = run_one_tool(conf, root_real, &calls[ci], &tres);
+          neo_events_emit("tool_result", tr == 0, neo_events_now_ms() - t0,
+                          calls[ci].name ? calls[ci].name : "?");
+          if (tr != 0) {
+            neo_events_emit("error", 0, 0, calls[ci].name ? calls[ci].name : "tool");
             neo_tool_calls_free(calls, ncalls);
             neo_buf_free(&tres);
             neo_buf_free(&body);

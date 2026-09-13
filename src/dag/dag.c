@@ -6,6 +6,7 @@
 #include "agent_tools.h"
 #include "capability_matrix.h"
 #include "llm.h"
+#include "neo_events.h"
 #include "yyjson.h"
 #include <limits.h>
 #include <stdio.h>
@@ -666,14 +667,23 @@ static int dag_run_graph(const agent_config_t *conf, const char *root_real, cons
 
     {
       char kind[96];
+      char detail[160];
+      long t0;
+      int step_rc;
       dag_step_kind(st, kind, sizeof(kind));
       if (verbose)
         fprintf(stderr, "neo: step start dag=%s id=%s %s\n", wf->name,
                 st->id ? st->id : "?", kind);
-      if (dag_run_step(conf, root_real, wf->name, wf, st, map, &map_n, &prev) != 0) {
+      snprintf(detail, sizeof(detail), "%s:%s", wf->name ? wf->name : "?",
+               st->id ? st->id : "?");
+      t0 = neo_events_now_ms();
+      step_rc = dag_run_step(conf, root_real, wf->name, wf, st, map, &map_n, &prev);
+      neo_events_emit("dag_step", step_rc == 0, neo_events_now_ms() - t0, detail);
+      if (step_rc != 0) {
         /* 失败摘要始终打出，便于无 -v 时定位卡在哪一步。 */
         fprintf(stderr, "neo: step end   dag=%s id=%s %s status=fail\n", wf->name,
                 st->id ? st->id : "?", kind);
+        neo_events_emit("error", 0, 0, detail);
         dag_map_free(map, map_n);
         free(prev);
         return -1;
@@ -782,7 +792,11 @@ int dag_run(const agent_config_t *conf, const char *dag_name, char **out_text,
     return -1;
   }
   /* 执行前预检 requires：缺能力则拒绝跑图（plan/run/dag 共用此入口）。 */
-  if (dag_check_requires(conf, "run", wf) != 0) return -1;
+  if (dag_check_requires(conf, "run", wf) != 0) {
+    neo_events_emit("error", 0, 0, dag_name);
+    return -1;
+  }
+  neo_events_emit("session_start", 1, 0, dag_name);
 
 #if !defined(__APPLE__) && !defined(__linux__)
   fprintf(stderr, "neo: DAG not supported on this platform\n");
@@ -791,6 +805,7 @@ int dag_run(const agent_config_t *conf, const char *dag_name, char **out_text,
   root = (conf->tools.root && conf->tools.root[0]) ? conf->tools.root : ".";
   if (!realpath(root, root_real)) {
     fprintf(stderr, "neo: tools.root realpath failed\n");
+    neo_events_emit("error", 0, 0, "tools.root realpath");
     return -1;
   }
 
@@ -810,13 +825,22 @@ int dag_run(const agent_config_t *conf, const char *dag_name, char **out_text,
     int j, k;
     if (wf->steps[i].type == DAG_STEP_LOOP) {
       char kind[96];
+      char detail[160];
+      long t0;
+      int step_rc;
       dag_step_kind(&wf->steps[i], kind, sizeof(kind));
       if (verbose)
         fprintf(stderr, "neo: step start dag=%s id=%s %s\n", wf->name,
                 wf->steps[i].id ? wf->steps[i].id : "?", kind);
-      if (dag_run_step(conf, root_real, wf->name, wf, &wf->steps[i], map, &map_n, &prev) != 0) {
+      snprintf(detail, sizeof(detail), "%s:%s", wf->name ? wf->name : "?",
+               wf->steps[i].id ? wf->steps[i].id : "?");
+      t0 = neo_events_now_ms();
+      step_rc = dag_run_step(conf, root_real, wf->name, wf, &wf->steps[i], map, &map_n, &prev);
+      neo_events_emit("dag_step", step_rc == 0, neo_events_now_ms() - t0, detail);
+      if (step_rc != 0) {
         fprintf(stderr, "neo: step end   dag=%s id=%s %s status=fail\n", wf->name,
                 wf->steps[i].id ? wf->steps[i].id : "?", kind);
+        neo_events_emit("error", 0, 0, detail);
         dag_map_free(map, map_n);
         free(prev);
         return -1;
@@ -837,13 +861,22 @@ int dag_run(const agent_config_t *conf, const char *dag_name, char **out_text,
     if (skip) continue;
     {
       char kind[96];
+      char detail[160];
+      long t0;
+      int step_rc;
       dag_step_kind(&wf->steps[i], kind, sizeof(kind));
       if (verbose)
         fprintf(stderr, "neo: step start dag=%s id=%s %s\n", wf->name,
                 wf->steps[i].id ? wf->steps[i].id : "?", kind);
-      if (dag_run_step(conf, root_real, wf->name, wf, &wf->steps[i], map, &map_n, &prev) != 0) {
+      snprintf(detail, sizeof(detail), "%s:%s", wf->name ? wf->name : "?",
+               wf->steps[i].id ? wf->steps[i].id : "?");
+      t0 = neo_events_now_ms();
+      step_rc = dag_run_step(conf, root_real, wf->name, wf, &wf->steps[i], map, &map_n, &prev);
+      neo_events_emit("dag_step", step_rc == 0, neo_events_now_ms() - t0, detail);
+      if (step_rc != 0) {
         fprintf(stderr, "neo: step end   dag=%s id=%s %s status=fail\n", wf->name,
                 wf->steps[i].id ? wf->steps[i].id : "?", kind);
+        neo_events_emit("error", 0, 0, detail);
         dag_map_free(map, map_n);
         free(prev);
         return -1;

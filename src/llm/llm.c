@@ -1,4 +1,5 @@
 #include "llm.h"
+#include "neo_events.h"
 #include "neo_http.h"
 #include "yyjson.h"
 #include <stdio.h>
@@ -222,12 +223,14 @@ static int llm_post_body(const char *base_url, const char *api_key, const char *
   char url[1024];
   long code = 0;
   int err;
+  long t0;
 
   if (!base_url || !body || !out) return -1;
   out->data = NULL;
   out->size = 0;
   snprintf(url, sizeof(url), "%s/chat/completions", base_url);
 
+  t0 = neo_events_now_ms();
   err = do_request(url, api_key, body, out, &code);
   if (err == 0 && (code == 429 || code == 503 || (code >= 500 && code < 600))) {
     llm_response_free(out);
@@ -239,6 +242,8 @@ static int llm_post_body(const char *base_url, const char *api_key, const char *
   }
 
   if (err != 0) {
+    neo_events_emit("llm_done", 0, neo_events_now_ms() - t0, "request_failed");
+    neo_events_emit("error", 0, 0, "llm_request");
     llm_response_free(out);
     return -1;
   }
@@ -246,9 +251,12 @@ static int llm_post_body(const char *base_url, const char *api_key, const char *
     if (out->data && out->size)
       fprintf(stderr, "neo: LLM HTTP %ld: %.*s\n", code,
               (int)(out->size > 512 ? 512 : out->size), out->data);
+    neo_events_emit("llm_done", 0, neo_events_now_ms() - t0, "http_not_200");
+    neo_events_emit("error", 0, 0, "llm_http");
     llm_response_free(out);
     return -1;
   }
+  neo_events_emit("llm_done", 1, neo_events_now_ms() - t0, "ok");
   return 0;
 }
 

@@ -192,6 +192,19 @@ roles: {
 
 `neo plan -o FILE` 仍表示保存**规划 DAG**，与聊天模式按子命令区分。
 
+### 5.3 结构化运行事件（JSONL）
+
+默认关闭。设置 `NEO_EVENTS=1`（或 `true`/`yes`/`on`）后，向 **stderr** 写一行一事件；若设 `NEO_EVENTS_PATH=文件` 则追加到该文件。
+
+```bash
+NEO_EVENTS=1 ./neo dag run show_time
+NEO_EVENTS=1 NEO_EVENTS_PATH=.neo/events.jsonl ./neo dag run cli_count
+```
+
+每行形如：`{"ts":1726200000,"name":"dag_step","ok":1,"ms":12,"detail":"cli_count:run"}`。
+
+事件名：`session_start`、`tool_call`、`tool_result`、`dag_step`、`llm_done`、`error`。`-v` 仍是人类可读步骤日志，可与事件流同时开。
+
 ---
 
 ## 6. 能力矩阵（能调用什么）

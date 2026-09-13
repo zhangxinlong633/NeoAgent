@@ -92,11 +92,11 @@
 
 **Files:** 新建 `src/core/neo_events.h` / `.c`（或等价薄封装）、`main.c` / `dag.c` / `agent_tools.c` 挂钩
 
-- [ ] 环境变量或 `-v` 扩展：例如 `NEO_EVENTS=1` 时向 stderr（或 `.neo/events.jsonl`）写一行一事件
-- [ ] 最小事件：`session_start` / `tool_call` / `tool_result` / `dag_step` / `llm_done` / `error`（字段：ts、name、ok、ms、简短 detail）
-- [ ] 默认关闭，避免吵；手册一节
-- [ ] 冒烟：开开关跑 `dag run show_time` 可见至少 1 条 JSON
-- [ ] Commit
+- [x] 环境变量或 `-v` 扩展：例如 `NEO_EVENTS=1` 时向 stderr（或 `.neo/events.jsonl`）写一行一事件
+- [x] 最小事件：`session_start` / `tool_call` / `tool_result` / `dag_step` / `llm_done` / `error`（字段：ts、name、ok、ms、简短 detail）
+- [x] 默认关闭，避免吵；手册一节
+- [x] 冒烟：开开关跑 `dag run show_time` 可见至少 1 条 JSON
+- [x] Commit
 
 ---
 

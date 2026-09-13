@@ -233,6 +233,20 @@ else
   bad "-D -S mounts named session (rc=$RC err=$ERR)"
 fi
 
+# Task C1: NEO_EVENTS=1 → stderr JSONL（至少 session_start / dag_step）
+_out="$(mktemp)"; _err="$(mktemp)"
+set +e
+NEO_EVENTS=1 "$NEO" -c "$CFG" dag run cli_count >"$_out" 2>"$_err"
+_rc=$?
+set -e
+OUT="$(cat "$_out")"; ERR="$(cat "$_err")"; RC=$_rc
+rm -f "$_out" "$_err"
+if [[ "$RC" -eq 0 ]] && grep -q '"name":"session_start"' <<<"$ERR" && grep -q '"name":"dag_step"' <<<"$ERR"; then
+  ok "NEO_EVENTS emits session_start and dag_step"
+else
+  bad "NEO_EVENTS JSONL (rc=$RC err=$ERR)"
+fi
+
 run_capture "$NEO" --not-a-real-flag
 if [[ "$RC" -ne 0 ]] && grep -q "unknown option" <<<"$ERR"; then
   ok "unknown option rejected"

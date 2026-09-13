@@ -8,6 +8,7 @@
 #include "config.h"
 #include "daemon.h"
 #include "llm.h"
+#include "neo_events.h"
 #include "neo_md_term.h"
 #include "neo_memory.h"
 #include "neo_session.h"
@@ -631,6 +632,7 @@ int main(int argc, char **argv) {
       conf.model.name = malloc(strlen(model_override) + 1);
       if (conf.model.name) strcpy(conf.model.name, model_override);
     }
+    neo_events_emit("session_start", 1, 0, d_n > 0 && d_ids ? d_ids[0] : "daemon");
     r = socket_path ? run_daemon_socket(&conf, socket_path, debug, verbose, d_ids, d_n)
                     : run_daemon_stdin(&conf, debug, verbose, render, d_ids, d_n);
     neo_session_free_ids(d_ids, d_n);
@@ -979,6 +981,8 @@ int main(int argc, char **argv) {
       fprintf(stderr, " msgs=%d write=%s\n", n_prefix, session_write_id);
     }
   }
+
+  neo_events_emit("session_start", 1, 0, session_write_id ? session_write_id : "chat");
 
   if (conf.tools.enabled && getenv(NEO_DISABLE_TOOLS_GETENV) == NULL)
     err = agent_run_with_tools(&conf, system_prompt, prefix, n_prefix, user_message, &resp);
