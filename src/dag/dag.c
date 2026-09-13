@@ -231,7 +231,7 @@ static int dag_run_tool_step(const agent_config_t *conf, const char *root_real, 
     if (attempt > 0)
       fprintf(stderr, "neo: DAG:%s step:%s: retry attempt %d/%d\n", dag_name,
               st->id ? st->id : "?", attempt + 1, attempts);
-    if (neo_dispatch_tool(conf, root_real, st->tool, args, &out, &out_len) != 0) {
+    if (neo_dispatch_tool(conf, root_real, st->tool, args, &out, &out_len, 0) != 0) {
       fprintf(stderr, "neo: DAG:%s step:%s: tool dispatch failed\n", dag_name, st->id);
       last_fail = -1;
       continue;
@@ -291,7 +291,7 @@ static int dag_run_tool_step(const agent_config_t *conf, const char *root_real, 
       free(out);
       out = NULL;
       out_len = 0;
-      if (neo_dispatch_tool(conf, root_real, st->tool, args, &out, &out_len) != 0) {
+      if (neo_dispatch_tool(conf, root_real, st->tool, args, &out, &out_len, 0) != 0) {
         fprintf(stderr, "neo: DAG:%s step:%s: tool dispatch failed after LLM RETRY\n",
                 dag_name, st->id);
         last_fail = -1;

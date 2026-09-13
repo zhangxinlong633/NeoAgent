@@ -877,7 +877,8 @@ static int tool_mkdir(const agent_config_t *conf, const char *root_real, const c
 }
 #endif
 
-static int run_one_tool(const agent_config_t *conf, const char *root_real, NeoToolCall *tc, NeoBuf *result) {
+static int run_one_tool(const agent_config_t *conf, const char *root_real, NeoToolCall *tc,
+                        NeoBuf *result, int timeout_override_sec) {
   int idx;
   char *out = NULL;
   size_t out_len = 0;
@@ -960,7 +961,8 @@ static int run_one_tool(const agent_config_t *conf, const char *root_real, NeoTo
   idx = command_tool_find(conf, tc->name);
   if (idx >= 0) {
     if (command_tool_run(conf, root_real, &conf->tools.commands[idx],
-                         tc->arguments ? tc->arguments : "{}", &out, &out_len, 0) != 0) {
+                         tc->arguments ? tc->arguments : "{}", &out, &out_len,
+                         timeout_override_sec) != 0) {
       int r = neo_buf_append(result, out ? out : "ERROR: command tool failed", 0);
       free(out);
       return r;
@@ -971,12 +973,14 @@ static int run_one_tool(const agent_config_t *conf, const char *root_real, NeoTo
       return r;
     }
   }
+  (void)timeout_override_sec; /* builtin/MCP 路径不保证墙钟覆盖 */
   return neo_buf_append(result, "ERROR: unknown tool", 0);
 }
 
 int neo_dispatch_tool(const agent_config_t *conf, const char *root_real,
                       const char *name, const char *args_json,
-                      char **out_text, size_t *out_len) {
+                      char **out_text, size_t *out_len,
+                      int timeout_override_sec) {
   NeoToolCall tc;
   NeoBuf result;
   int r;
@@ -990,7 +994,7 @@ int neo_dispatch_tool(const agent_config_t *conf, const char *root_real,
   tc.arguments = (char *)(args_json ? args_json : "{}");
   neo_events_emit("tool_call", 1, 0, name);
   t0 = neo_events_now_ms();
-  r = run_one_tool(conf, root_real, &tc, &result);
+  r = run_one_tool(conf, root_real, &tc, &result, timeout_override_sec);
   neo_events_emit("tool_result", r == 0, neo_events_now_ms() - t0, name);
   if (r != 0) {
     neo_events_emit("error", 0, 0, name);
@@ -1164,7 +1168,7 @@ int agent_run_with_tools(
           int tr;
           neo_events_emit("tool_call", 1, 0, calls[ci].name ? calls[ci].name : "?");
           t0 = neo_events_now_ms();
-          tr = run_one_tool(conf, root_real, &calls[ci], &tres);
+          tr = run_one_tool(conf, root_real, &calls[ci], &tres, 0);
           neo_events_emit("tool_result", tr == 0, neo_events_now_ms() - t0,
                           calls[ci].name ? calls[ci].name : "?");
           if (tr != 0) {

@@ -23,10 +23,12 @@ int agent_run_with_tools(
 
 /*
  * 按能力名分发一次调用（builtin / commands / mcp_*）。
+ * timeout_override_sec>0 时覆盖 command 墙钟；0 表示用矩阵默认。builtin/MCP 不保证。
  * 即使工具返回 "ERROR: ..." 字符串也返回 0（表示已处理）；调用方 free *out_text。
  */
 int neo_dispatch_tool(const agent_config_t *conf, const char *root_real,
                       const char *name, const char *args_json,
-                      char **out_text, size_t *out_len);
+                      char **out_text, size_t *out_len,
+                      int timeout_override_sec);
 
 #endif

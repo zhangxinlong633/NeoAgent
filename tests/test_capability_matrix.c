@@ -219,7 +219,7 @@ static int test_http_policy(void) {
   }
   /* allowlist reject — no network needed */
   if (neo_dispatch_tool(&conf, root, "http_get", "{\"url\":\"https://evil.example/x\"}", &out,
-                        &out_len) != 0) {
+                        &out_len, 0) != 0) {
     capability_matrix_free(&m);
     config_free(&conf);
     FAIL("http_get dispatch");
@@ -300,7 +300,7 @@ static int test_dispatch_builtins(void) {
     char args[512];
     snprintf(args, sizeof(args),
              "{\"path\":\"%s\",\"content\":\"%s\\nline2\\n\"}", tmp_rel, mark);
-    if (neo_dispatch_tool(&conf, root, "write_file", args, &out, &out_len) != 0) {
+    if (neo_dispatch_tool(&conf, root, "write_file", args, &out, &out_len, 0) != 0) {
       capability_matrix_free(&m);
       config_free(&conf);
       FAIL("write_file");
@@ -312,7 +312,7 @@ static int test_dispatch_builtins(void) {
   {
     char args[256];
     snprintf(args, sizeof(args), "{\"path\":\"%s\"}", tmp_rel);
-    if (neo_dispatch_tool(&conf, root, "read_file", args, &out, &out_len) != 0) {
+    if (neo_dispatch_tool(&conf, root, "read_file", args, &out, &out_len, 0) != 0) {
       unlink(tmp_rel);
       capability_matrix_free(&m);
       config_free(&conf);
@@ -330,7 +330,7 @@ static int test_dispatch_builtins(void) {
     out = NULL;
   }
 
-  if (neo_dispatch_tool(&conf, root, "list_dir", "{\"path\":\"tests/fixtures\"}", &out, &out_len) !=
+  if (neo_dispatch_tool(&conf, root, "list_dir", "{\"path\":\"tests/fixtures\"}", &out, &out_len, 0) !=
       0) {
     unlink(tmp_rel);
     capability_matrix_free(&m);
@@ -351,7 +351,7 @@ static int test_dispatch_builtins(void) {
   {
     char args[256];
     snprintf(args, sizeof(args), "{\"pattern\":\"%s\",\"path\":\"tests/fixtures\"}", mark);
-    if (neo_dispatch_tool(&conf, root, "grep", args, &out, &out_len) != 0) {
+    if (neo_dispatch_tool(&conf, root, "grep", args, &out, &out_len, 0) != 0) {
       unlink(tmp_rel);
       capability_matrix_free(&m);
       config_free(&conf);
@@ -372,7 +372,7 @@ static int test_dispatch_builtins(void) {
   /* mkdir (parents) + append_file + stat */
   if (neo_dispatch_tool(&conf, root, "mkdir",
                         "{\"path\":\"tests/fixtures/_cap_mkdir_nest/a\",\"parents\":true}", &out,
-                        &out_len) != 0) {
+                        &out_len, 0) != 0) {
     unlink(tmp_rel);
     capability_matrix_free(&m);
     config_free(&conf);
@@ -391,7 +391,7 @@ static int test_dispatch_builtins(void) {
 
   if (neo_dispatch_tool(&conf, root, "append_file",
                         "{\"path\":\"tests/fixtures/_cap_mkdir_nest/a/note.txt\",\"content\":\"A\"}",
-                        &out, &out_len) != 0) {
+                        &out, &out_len, 0) != 0) {
     free(out);
     unlink(tmp_rel);
     capability_matrix_free(&m);
@@ -402,7 +402,7 @@ static int test_dispatch_builtins(void) {
   out = NULL;
   if (neo_dispatch_tool(&conf, root, "append_file",
                         "{\"path\":\"tests/fixtures/_cap_mkdir_nest/a/note.txt\",\"content\":\"B\"}",
-                        &out, &out_len) != 0) {
+                        &out, &out_len, 0) != 0) {
     free(out);
     unlink(tmp_rel);
     capability_matrix_free(&m);
@@ -413,7 +413,7 @@ static int test_dispatch_builtins(void) {
   out = NULL;
   if (neo_dispatch_tool(&conf, root, "read_file",
                         "{\"path\":\"tests/fixtures/_cap_mkdir_nest/a/note.txt\"}", &out,
-                        &out_len) != 0) {
+                        &out_len, 0) != 0) {
     unlink(tmp_rel);
     capability_matrix_free(&m);
     config_free(&conf);
@@ -432,7 +432,7 @@ static int test_dispatch_builtins(void) {
 
   if (neo_dispatch_tool(&conf, root, "stat",
                         "{\"path\":\"tests/fixtures/_cap_mkdir_nest/a/note.txt\"}", &out,
-                        &out_len) != 0) {
+                        &out_len, 0) != 0) {
     unlink(tmp_rel);
     capability_matrix_free(&m);
     config_free(&conf);
@@ -452,7 +452,7 @@ static int test_dispatch_builtins(void) {
   rmdir("tests/fixtures/_cap_mkdir_nest/a");
   rmdir("tests/fixtures/_cap_mkdir_nest");
 
-  if (neo_dispatch_tool(&conf, root, "read_file", "{\"path\":\"../etc/passwd\"}", &out, &out_len) !=
+  if (neo_dispatch_tool(&conf, root, "read_file", "{\"path\":\"../etc/passwd\"}", &out, &out_len, 0) !=
       0) {
     unlink(tmp_rel);
     capability_matrix_free(&m);
@@ -470,7 +470,7 @@ static int test_dispatch_builtins(void) {
   free(out);
   out = NULL;
 
-  if (neo_dispatch_tool(&conf, root, "no_such_tool", "{}", &out, &out_len) != 0) {
+  if (neo_dispatch_tool(&conf, root, "no_such_tool", "{}", &out, &out_len, 0) != 0) {
     unlink(tmp_rel);
     capability_matrix_free(&m);
     config_free(&conf);
@@ -520,7 +520,7 @@ static int test_shell_and_mcp(void) {
   }
   if (neo_dispatch_tool(&conf, root, "run_command",
                         "{\"argv\":[\"tests/fixtures/bin/echo-argv.sh\",\"hi\"]}", &out,
-                        &out_len) != 0) {
+                        &out_len, 0) != 0) {
     capability_matrix_free(&m);
     config_free(&conf);
     FAIL("run_command");
@@ -560,7 +560,7 @@ static int test_shell_and_mcp(void) {
     mcp_stdio_shutdown_all();
     FAIL("realpath mcp");
   }
-  if (neo_dispatch_tool(&conf, root, "mcp_mock_echo", "{\"text\":\"hi\"}", &out, &out_len) != 0) {
+  if (neo_dispatch_tool(&conf, root, "mcp_mock_echo", "{\"text\":\"hi\"}", &out, &out_len, 0) != 0) {
     capability_matrix_free(&m);
     config_free(&conf);
     mcp_stdio_shutdown_all();
@@ -622,7 +622,7 @@ static int test_cap_dir_and_propose(void) {
           &conf, root, "propose_capability",
           "{\"name\":\"unit_prop\",\"description\":\"unit proposed\",\"argv\":[\"./tests/fixtures/bin/"
           "echo-argv.sh\"]}",
-          &out, &out_len) != 0) {
+          &out, &out_len, 0) != 0) {
     capability_matrix_free(&m);
     config_free(&conf);
     FAIL("propose dispatch");
@@ -679,7 +679,7 @@ static int test_memory_add_row_and_dispatch(void) {
   capability_matrix_free(&m);
 
   if (neo_dispatch_tool(&conf, ".", "memory_add", "{\"text\":\"remember dark mode prefs\"}", &out,
-                        &out_len) != 0)
+                        &out_len, 0) != 0)
     FAIL("dispatch");
   if (!out || !strstr(out, "OK")) {
     free(out);
