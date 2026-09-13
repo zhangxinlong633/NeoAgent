@@ -87,6 +87,8 @@ capability_matrix: {
 - 调用：与其它能力相同，经 OpenAI `tool_calls` 或 DAG `type: tool`。
 - 失败：单个 server 跳过，不影响 builtin / commands。
 
+可选行业样例：Blender 交互式 MCP（社区 bridge，不默认开）见 [`example/usage/blender-mcp.md`](../example/usage/blender-mcp.md)。可重复演示优先用 `capabilities/local/blender_*.json5` headless 命令。
+
 ### 1.4 能力目录（一文件一能力）
 
 配置 `capability_matrix.directory`（例如 `"capabilities"`）后，Neo 读取该目录下的 **manifest** 与 `load[]` 子目录中的 `*.json5`，合并进矩阵（与内联 `commands` 相同校验）。

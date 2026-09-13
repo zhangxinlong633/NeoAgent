@@ -13,5 +13,6 @@
 5. [`roles.md`](roles.md) — 同会话 `--role` 切换
 6. [`tools.md`](tools.md) — 能力矩阵与高铁查询等
 7. [`daemon.md`](daemon.md) — `-D` / `daemon` / `--socket`；`User>` / `neo>`
+8. [`blender-mcp.md`](blender-mcp.md) — 可选 Blender stdio MCP（不默认开；优先 headless `blender_*`）
 
 在仓库根按文件中的命令执行即可。zsh 中带 `?` / `*` 的句子请加引号。

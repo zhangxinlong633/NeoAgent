@@ -225,6 +225,8 @@ Policy 示例：`shell_enabled` 默认关；`http_fetch_enabled` + `http_allow_h
 ./neo "看一下明天南京到北京的高铁信息"
 ```
 
+Blender：**优先** headless 套餐（`./neo dag run blender_cup` 等，见 `capabilities/local/`）。可选交互式 MCP 登记样例（须本机 Blender + addon，**不默认开**，含 `execute_code` 风险说明）见 [`example/usage/blender-mcp.md`](../example/usage/blender-mcp.md)。
+
 ---
 
 ## 7. DAG 与规划（怎么编排）

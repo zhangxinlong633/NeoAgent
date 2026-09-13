@@ -69,6 +69,20 @@
     // http_fetch_enabled: true,
     // http_allow_hosts: "baidu.com,www.baidu.com",
     // http_fetch_max_bytes: 65536,
+
+    // Optional Blender MCP (stdio) — NOT on by default. Needs local Blender + addon
+    // (e.g. community bridge https://github.com/ahujasid/blender-mcp via `uvx blender-mcp`).
+    // Prefer headless capabilities: blender_cup / blender_product_turntable / blender_export_glb.
+    // Warning: bridges often expose execute_code-like tools; Neo does not filter MCP tool names.
+    // See example/usage/blender-mcp.md. Set BLENDER_HOST/PORT in the shell if needed (no mcp env yet).
+    // mcp_servers: [
+    //   {
+    //     name: "blender",
+    //     command: "uvx", // or absolute path to uvx
+    //     args: ["blender-mcp"],
+    //     enabled: true,
+    //   },
+    // ],
   },
 
   // Default pack: dags/{baseline,workspace}. Flagship SOP: workspace_brief.

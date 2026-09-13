@@ -116,10 +116,10 @@
 
 **Files:** `config/config.json5.example` 注释块、`docs/manual.md` 或 `example/usage/`
 
-- [ ] 文档化 stdio MCP 登记片段（官方/社区 bridge）；注明须本机 Blender + add-on
-- [ ] Policy：提示裁剪 `execute_code` 类高危 tool（若 bridge 暴露）
-- [ ] 不强制 CI 依赖 Blender
-- [ ] Commit
+- [x] 文档化 stdio MCP 登记片段（官方/社区 bridge）；注明须本机 Blender + add-on
+- [x] Policy：提示裁剪 `execute_code` 类高危 tool（若 bridge 暴露）
+- [x] 不强制 CI 依赖 Blender
+- [x] Commit
 
 ---
 
