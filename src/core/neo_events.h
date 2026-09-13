@@ -4,7 +4,7 @@
 /*
  * 结构化运行事件（JSONL）。默认关闭；NEO_EVENTS=1 开启。
  * 输出：NEO_EVENTS_PATH 指定文件（追加），否则 stderr。
- * 每行：{"ts":unix,"name":"...","ok":0|1,"ms":N,"detail":"..."}
+ * 每行：{"v":1,"ts":unix,"run_id":"hex","name":"...","ok":0|1,"ms":N,"detail":"..."}
  */
 
 /* 1 表示已开启（环境变量 NEO_EVENTS=1/true/yes/on）。 */

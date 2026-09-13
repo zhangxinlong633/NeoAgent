@@ -1,6 +1,7 @@
 /*
  * 结构化运行事件：默认关闭，避免吵；NEO_EVENTS=1 时写 JSONL。
  * 不做第二套日志系统——只是薄封装，供 dag / tool / llm / CLI 挂钩。
+ * run_id：进程内首次 emit 懒生成，不跨进程持久化。
  */
 #include "neo_events.h"
 #include <stdio.h>
@@ -14,6 +15,10 @@
 #endif
 
 #define NEO_EVENTS_DETAIL_MAX 200
+#define NEO_EVENTS_SCHEMA_V 1
+
+/* 16 hex chars + NUL；空串表示尚未生成 */
+static char g_run_id[17];
 
 long neo_events_now_ms(void) {
 #if defined(__APPLE__) || defined(__linux__)
@@ -36,6 +41,28 @@ int neo_events_enabled(void) {
     return 1;
   /* 其它非空值也视为开启，便于 NEO_EVENTS=jsonl */
   return 1;
+}
+
+static void ensure_run_id(void) {
+  unsigned char b[8];
+  size_t i;
+  FILE *f;
+  if (g_run_id[0]) return;
+  memset(b, 0, sizeof(b));
+  f = fopen("/dev/urandom", "rb");
+  if (f) {
+    if (fread(b, 1, sizeof(b), f) != sizeof(b)) {
+      /* 读不足则混入时间，避免全零 */
+      long t = (long)time(NULL) ^ (long)neo_events_now_ms();
+      memcpy(b, &t, sizeof(t) < sizeof(b) ? sizeof(t) : sizeof(b));
+    }
+    fclose(f);
+  } else {
+    long t = (long)time(NULL) ^ (long)neo_events_now_ms();
+    memcpy(b, &t, sizeof(t) < sizeof(b) ? sizeof(t) : sizeof(b));
+  }
+  for (i = 0; i < sizeof(b); i++)
+    snprintf(g_run_id + i * 2, 3, "%02x", b[i]);
 }
 
 static void json_escape_append(char *dst, size_t dst_sz, size_t *used, const char *s) {
@@ -68,13 +95,14 @@ void neo_events_emit(const char *name, int ok, long ms, const char *detail) {
   if (!neo_events_enabled()) return;
   if (!name || !name[0]) name = "unknown";
   if (ms < 0) ms = 0;
+  ensure_run_id();
   ts = time(NULL);
   esc[0] = '\0';
   json_escape_append(esc, sizeof(esc), &eu, detail);
 
   snprintf(line, sizeof(line),
-           "{\"ts\":%ld,\"name\":\"%s\",\"ok\":%d,\"ms\":%ld,\"detail\":\"%s\"}\n",
-           (long)ts, name, ok ? 1 : 0, ms, esc);
+           "{\"v\":%d,\"ts\":%ld,\"run_id\":\"%s\",\"name\":\"%s\",\"ok\":%d,\"ms\":%ld,\"detail\":\"%s\"}\n",
+           NEO_EVENTS_SCHEMA_V, (long)ts, g_run_id, name, ok ? 1 : 0, ms, esc);
 
   path = getenv("NEO_EVENTS_PATH");
   if (path && path[0]) {

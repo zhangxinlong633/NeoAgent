@@ -61,6 +61,35 @@ int main(void) {
     fprintf(stderr, "expected escaped quote in detail:\n%s\n", buf);
     return 1;
   }
+  if (!strstr(buf, "\"v\":1")) {
+    fprintf(stderr, "missing v:1:\n%s\n", buf);
+    return 1;
+  }
+  {
+    const char *p1 = strstr(buf, "\"run_id\":\"");
+    const char *p2;
+    char id1[32];
+    size_t i = 0;
+    if (!p1) {
+      fprintf(stderr, "missing run_id:\n%s\n", buf);
+      return 1;
+    }
+    p1 += strlen("\"run_id\":\"");
+    while (p1[i] && p1[i] != '"' && i + 1 < sizeof(id1)) {
+      id1[i] = p1[i];
+      i++;
+    }
+    id1[i] = '\0';
+    if (i < 8) {
+      fprintf(stderr, "run_id too short: %s\n", id1);
+      return 1;
+    }
+    p2 = strstr(p1, "\"run_id\":\"");
+    if (!p2 || strncmp(p2 + strlen("\"run_id\":\""), id1, i) != 0) {
+      fprintf(stderr, "run_id not stable across lines:\n%s\n", buf);
+      return 1;
+    }
+  }
   printf("ok\n");
   return 0;
 }
